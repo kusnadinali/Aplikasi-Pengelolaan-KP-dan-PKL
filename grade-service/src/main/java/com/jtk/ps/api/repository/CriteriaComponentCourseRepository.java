@@ -29,4 +29,13 @@ public interface CriteriaComponentCourseRepository extends JpaRepository<Criteri
 
     @Query(value = "select distinct  a.*  from criteria_component_course a join course_values b on b.criteria_id = a.id  join component_course c on c.id = a.component_id join participant p on p.id = b.participant_id where a.component_id = :componentId and p.`year` = :year", nativeQuery = true)
     List<CriteriaComponentCourse> findCriteriaLastYear(Integer year,Integer componentId);
+
+    @Query(value = "SELECT IF(COUNT(*) > 0, true, false) FROM criteria_component_course WHERE industry_criteria_id = :idIndustry", nativeQuery = true)
+    Integer isCriteriaByIndustryIdExist(Integer idIndustry);
+
+    @Query(value = "UPDATE criteria_component_course SET isDelete = 1 WHERE industry_criteria_id = :idIndustry", nativeQuery = true)
+    void deleteCriteriaByIndustryId(Integer idIndustry);
+
+    @Query(value = "select * from criteria_component_course where industry_criteria_id = :idIndustry and is_deleted = 0", nativeQuery = true)
+    List<CriteriaComponentCourse> findByIndustryId(Integer idIndustry);
 }
