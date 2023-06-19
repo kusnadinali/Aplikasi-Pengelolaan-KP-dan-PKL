@@ -43,6 +43,7 @@ public interface ICourseService {
 
     void finalizationAllCourseForm();
 
-    public ByteArrayInputStream loadCourse(Integer year, Integer prodiId);
+    ByteArrayInputStream loadCourse(Integer year, Integer prodiId);
     // void updateComponentCourse(Integer idComponent);
+
 }
