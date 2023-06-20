@@ -12,7 +12,7 @@ import com.jtk.ps.api.model.SeminarCriteria;
 @Repository
 public interface SeminarCriteriaRepository extends JpaRepository<SeminarCriteria, Integer>{
     
-    @Query(value = "select * from `seminar_criteria` where is_deleted = :isDeleted",nativeQuery = true)
+    @Query(value = "select * from `seminar_criteria` where is_deleted = :isDeleted order by is_selected desc",nativeQuery = true)
     List<SeminarCriteria> findAllByIsDeleted(@Param("isDeleted") Integer isDeleted);
 
     @Query(value = "select * from `seminar_criteria` where is_deleted = 0 and is_selected = 1",nativeQuery = true)
