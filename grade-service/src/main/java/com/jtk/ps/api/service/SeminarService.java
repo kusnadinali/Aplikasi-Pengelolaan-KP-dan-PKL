@@ -28,6 +28,7 @@ import com.jtk.ps.api.model.Account;
 import com.jtk.ps.api.model.Company;
 import com.jtk.ps.api.model.EventStore;
 import com.jtk.ps.api.model.Participant;
+import com.jtk.ps.api.model.Prerequisite;
 import com.jtk.ps.api.model.SeminarCriteria;
 import com.jtk.ps.api.model.SeminarForm;
 import com.jtk.ps.api.model.SeminarValues;
@@ -35,6 +36,7 @@ import com.jtk.ps.api.repository.AccountRepository;
 import com.jtk.ps.api.repository.CompanyRepository;
 import com.jtk.ps.api.repository.EventStoreRepository;
 import com.jtk.ps.api.repository.ParticipantRepository;
+import com.jtk.ps.api.repository.PrerequisiteRepository;
 import com.jtk.ps.api.repository.SeminarCriteriaRepository;
 import com.jtk.ps.api.repository.SeminarFormRepository;
 import com.jtk.ps.api.repository.SeminarValuesRepository;
@@ -71,6 +73,10 @@ public class SeminarService implements ISeminarService{
 
     @Autowired
     @Lazy
+    private PrerequisiteRepository prerequisiteRepository;
+
+    @Autowired
+    @Lazy
     private EventStoreRepository eventStoreRepository;
 
     @Autowired
@@ -94,10 +100,11 @@ public class SeminarService implements ISeminarService{
 
     @Override
     public List<CompanyDto> getAllCompany(Integer roleId, Integer prodiId) {
-        List<Company> company = companyRepository.findAll();
+        List<Prerequisite> prerequisites = prerequisiteRepository.findByYear(Integer.parseInt(Year.now().toString()));
 
         List<CompanyDto> companyDtos = new ArrayList<>();
-        company.forEach(c -> {
+        prerequisites.forEach(p -> {
+            Company c = p.getCompany();
             CompanyDto temp = new CompanyDto();
             temp.setId(c.getId());
             temp.setName(c.getCompanyName());
