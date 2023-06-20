@@ -1,7 +1,9 @@
 package com.jtk.ps.api.service;
 
-import com.jtk.ps.api.controller.AccountController;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jtk.ps.api.dto.*;
+import com.jtk.ps.api.dto.kafka.AccountKafka;
 import com.jtk.ps.api.model.*;
 import com.jtk.ps.api.util.Constant;
 import com.jtk.ps.api.util.CookieUtil;
@@ -9,13 +11,13 @@ import com.jtk.ps.api.util.JwtUtil;
 import com.jtk.ps.api.repository.AccountRepository;
 import com.jtk.ps.api.repository.LecturerRepository;
 import io.jsonwebtoken.ExpiredJwtException;
-import java.io.IOException;
-import java.io.InputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,9 +34,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class AccountService implements UserDetailsService, IAccountService {
@@ -59,6 +58,28 @@ public class AccountService implements UserDetailsService, IAccountService {
     
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    @Lazy
+    private KafkaTemplate<String, String> kafkaAccountTemplate;
+
+    private void sendAccountKafka(Account account, String operation){
+        AccountKafka accountKafka = new AccountKafka();
+
+        accountKafka.setId(account.getId());
+        accountKafka.setUsername(account.getUsername());
+        accountKafka.setRole_id(account.getRole().id);
+        accountKafka.setOperation(operation);
+        try {
+            // Mengubah objek menjadi string JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String pesanJson = objectMapper.writeValueAsString(accountKafka);
+
+            kafkaAccountTemplate.send("account_topic", pesanJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public ReadAccountsResponse readAccounts(String token) {
@@ -348,6 +369,8 @@ public class AccountService implements UserDetailsService, IAccountService {
         account.setUsername(registerRequest.getUsername());
         account.setPassword(bCryptPasswordEncoder.encode(registerRequest.getPassword()));
         Account newAccount = accountRepository.save(account);
+
+        sendAccountKafka(newAccount, "ADDED");
         try {
             int idProdi = jwtTokenUtil.getProdiFromToken(accessToken).id;
             if(account.getRole() == ERole.COMMITTEE || account.getRole() == ERole.HEAD_STUDY_PROGRAM){
@@ -405,6 +428,7 @@ public class AccountService implements UserDetailsService, IAccountService {
             if (updateAccountRequest.getIdRole() != null) {
                 accountValue.setRole(ERole.valueOfId(updateAccountRequest.getIdRole()));
                 accountRepository.save(accountValue);
+                sendAccountKafka(accountValue, "UPDATE");
             }
         });
     }
@@ -429,6 +453,7 @@ public class AccountService implements UserDetailsService, IAccountService {
             }
         }
         accountRepository.delete(account);
+        sendAccountKafka(account, "DELETE");
     }
 
     @Override
