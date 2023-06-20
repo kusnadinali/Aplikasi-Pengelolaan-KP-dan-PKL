@@ -864,13 +864,15 @@ public class CourseService implements ICourseService{
                     break;
                 case "Pembimbing":
                     Optional<SupervisorGradeResult> sGrade = supervisorGradeResultRepository.findValueByPhase(criteria.getSupervisorCriteriaId(), pId,criteria.getTypeForm().replaceAll("[^0-9]+", ""));
-
                     if(sGrade.isPresent()){
+                        Optional<SupervisorGradeAspect> sAspect = supervisorGradeAspectRepository.findById(sGrade.get().getAspectId());
                         newValues.setCreated_date(LocalDate.now());
                         newValues.setCriteriaId(criteria.getId());
                         newValues.setMentorValuesId(sGrade.get().getId());
                         newValues.setParticipantId(pId);
-                        newValues.setValue((float) sGrade.get().getValue());
+
+                        float sValue = (sGrade.get().getValue()/sAspect.get().getGradeWeight())*100;
+                        newValues.setValue(sValue);
 
                         courseValuesRepository.save(newValues);
 
