@@ -39,7 +39,8 @@ public class CourseController {
     @GetMapping("/form") //checked
     public ResponseEntity<Object> getAllCourseForm(HttpServletRequest request){
         Integer roleId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_ROLE));
-        return ResponseHandler.generateResponse("Get all Course Form succeed",HttpStatus.OK, courseService.getAllCourse(roleId));
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
+        return ResponseHandler.generateResponse("Get all Course Form succeed",HttpStatus.OK, courseService.getAllCourse(roleId, prodiId));
     }
 
     @PostMapping("/form") //checked

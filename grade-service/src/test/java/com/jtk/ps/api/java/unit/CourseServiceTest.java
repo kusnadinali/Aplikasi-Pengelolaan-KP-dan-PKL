@@ -105,7 +105,7 @@ public class CourseServiceTest {
 
         when(courseFormRepository.findAllCourse(year)).thenReturn(courseForms);
 
-        List<CourseFormResponseDto> result = courseService.getAllCourse(0);
+        List<CourseFormResponseDto> result = courseService.getAllCourse(0,1);
 
         verify(courseFormRepository, times(1)).findAllCourse(year);
 

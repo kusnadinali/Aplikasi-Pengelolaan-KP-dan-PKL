@@ -178,12 +178,12 @@ public class CourseService implements ICourseService{
     }
 
     @Override
-    public List<CourseFormResponseDto> getAllCourse(Integer roleId) {
+    public List<CourseFormResponseDto> getAllCourse(Integer roleId,Integer prodiId) {
         List<CourseForm> courseForms = courseFormRepository.findAllCourse(Integer.parseInt(Year.now().toString()));
 
         List<CourseFormResponseDto> courseFormResponseDtos = new ArrayList<>();
         courseForms.forEach(c -> {
-            if(!(roleId == 0 && c.getIsFinalization() == 1)){   
+            if(!(roleId == 0 && c.getIsFinalization() == 1) && prodiId == c.getProdiId()){   
                 CourseFormResponseDto temp = new CourseFormResponseDto();
     
                 temp.setId(c.getId());

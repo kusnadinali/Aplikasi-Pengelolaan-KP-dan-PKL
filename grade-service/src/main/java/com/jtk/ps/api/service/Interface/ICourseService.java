@@ -15,7 +15,7 @@ import com.jtk.ps.api.model.CourseForm;
 
 public interface ICourseService {
     
-    List<CourseFormResponseDto> getAllCourse(Integer roleId);
+    List<CourseFormResponseDto> getAllCourse(Integer roleId, Integer prodiId);
 
     CourseForm createCourseForm(CourseFormRequestDto courseFormRequestDto);
 
