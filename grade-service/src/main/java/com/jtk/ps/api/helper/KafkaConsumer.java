@@ -1,5 +1,6 @@
 package com.jtk.ps.api.helper;
 
+import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -222,7 +223,7 @@ public class KafkaConsumer {
             // proses melakukan save pada tabel account
             if(receivedObject.getOperation().equalsIgnoreCase("ADDED")){
                 Company company = new Company();
-                company.setAccountId(1);
+                company.setAccountId(receivedObject.getAccount_id());
                 company.setCompanyEmail(receivedObject.getCompany_email());
                 company.setCompanyName(receivedObject.getCompany_name());
                 company.setSinceYear(receivedObject.getSince_year());
@@ -235,7 +236,7 @@ public class KafkaConsumer {
             else if(receivedObject.getOperation().equalsIgnoreCase("UPDATE")){
                 Optional<Company> company = companyRepository.findById(receivedObject.getId());
                 company.ifPresent(c -> {
-                    c.setAccountId(1);
+                    c.setAccountId(receivedObject.getAccount_id());
                     c.setCompanyEmail(receivedObject.getCompany_email());
                     c.setCompanyName(receivedObject.getCompany_name());
                     c.setSinceYear(receivedObject.getSince_year());
@@ -275,6 +276,7 @@ public class KafkaConsumer {
                 evaluation.setProdiId(receivedObject.getProdi_id());
                 evaluation.setStatus(receivedObject.getStatus());
                 evaluation.setYear(receivedObject.getYear());
+                evaluation.setUpdateDate(LocalDateTime.now());
 
                 evaluationRepository.save(evaluation);
                 eventStoreHandler("evaluation", "EVALUATION_ADDED", evaluation, evaluation.getId());
@@ -291,6 +293,7 @@ public class KafkaConsumer {
                     c.setStatus(receivedObject.getStatus());
                     c.setYear(receivedObject.getYear());
                     c.setId(receivedObject.getId());
+                    c.setUpdateDate(LocalDateTime.now());
 
                     evaluationRepository.save(c);
                     eventStoreHandler( "evaluation", "EVALUATION_UPDATE", c, c.getId());
@@ -320,6 +323,8 @@ public class KafkaConsumer {
             // proses melakukan save pada tabel account
             if(receivedObject.getOperation().equalsIgnoreCase("ADDED")){
                 Valuation valuation = new Valuation();
+
+                
                 
                 valuation.setAspectName(receivedObject.getAspectName());
                 valuation.setEvaluationId(receivedObject.getEvaluation_id());
@@ -327,7 +332,13 @@ public class KafkaConsumer {
                 valuation.setValue(receivedObject.getValue());
 
                 valuationRepository.save(valuation);
+                evaluationRepository.findById(valuation.getEvaluationId()).ifPresent(e ->{
+                    e.setUpdateDate(LocalDateTime.now());
+                    evaluationRepository.save(e);
+                    eventStoreHandler( "evaluation", "EVALUATION_UPDATE", e, e.getId());
+                });
                 eventStoreHandler("valuation", "VALUATION_ADDED", valuation, valuation.getId());
+
             }else if(receivedObject.getOperation().equalsIgnoreCase("DELETE")){
 
             }

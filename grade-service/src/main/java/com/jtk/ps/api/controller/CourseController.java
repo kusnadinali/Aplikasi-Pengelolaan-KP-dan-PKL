@@ -72,8 +72,8 @@ public class CourseController {
     }
 
     @GetMapping("/criteria/evaluation-form/aspect") // checked
-    public ResponseEntity<Object> getAspectEvaluationForm(@RequestParam("formType") String formType,@RequestParam("prodiId") Integer prodiId){
-        return ResponseHandler.generateResponse("Get Aspects Evaluation succeed",HttpStatus.OK, courseService.getCriteriaByEvaluationForm(formType,prodiId));
+    public ResponseEntity<Object> getAspectEvaluationForm(@RequestParam("formType") String formType, @RequestParam("formName") String formName,@RequestParam("prodiId") Integer prodiId){
+        return ResponseHandler.generateResponse("Get Aspects Evaluation succeed",HttpStatus.OK, courseService.getCriteriaByEvaluationForm(formType, formName,prodiId));
     }
 
     @GetMapping("/criteria/evaluation-form/aspect/type") // checked
@@ -98,8 +98,9 @@ public class CourseController {
     }
 
     @PutMapping("/component/criteria/update") //checked
-    public ResponseEntity<Object> updateAllCriteriaInComponentCourse(@RequestBody ComponentAndCriteriasDto newCriterias){
-        courseService.updateOrInsertCriteriaComponent(newCriterias);
+    public ResponseEntity<Object> updateAllCriteriaInComponentCourse(@RequestBody ComponentAndCriteriasDto newCriterias,HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
+        courseService.updateOrInsertCriteriaComponent(newCriterias, prodiId);
         return ResponseHandler.generateResponse("Update Criteria in Component Course Form succeed",HttpStatus.OK);
     }
 
@@ -109,9 +110,23 @@ public class CourseController {
     }
 
     @PostMapping("/form/finalization") //checked
-    public ResponseEntity<Object> finalizationAllCourse(){
-        courseService.finalizationAllCourseForm();
+    public ResponseEntity<Object> finalizationAllCourse(HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
+        courseService.finalizationAllCourseForm(prodiId);
         return ResponseHandler.generateResponse("Finalization All Course Form succeed",HttpStatus.OK);
+    }
+
+    @GetMapping("/form/finalization") //checked
+    public ResponseEntity<Object> isfinalizationAllCourse(HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
+        return ResponseHandler.generateResponse("Is Finalization Course Form succeed",HttpStatus.OK, courseService.isFinalization(prodiId));
+    }
+
+    @PostMapping("/form/finalization/cancel") //checked
+    public ResponseEntity<Object> cancelfinalizationAllCourse(HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
+        courseService.cancelFinalization(prodiId);
+        return ResponseHandler.generateResponse("Cancel Finalization All Course Form succeed",HttpStatus.OK);
     }
 
     @GetMapping("/generate-course")
@@ -123,5 +138,15 @@ public class CourseController {
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
             .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
             .body(file);
+    }
+
+    @GetMapping("/kafka/event") //checked
+    public ResponseEntity<Object> getAllEventStore(){
+        return ResponseHandler.generateResponse("Get All Event succeed",HttpStatus.OK, courseService.getEventStore());
+    }
+
+    @GetMapping("/kafka/evaluation") //checked
+    public ResponseEntity<Object> getAllEvaluation(){
+        return ResponseHandler.generateResponse("Get All Event succeed",HttpStatus.OK, courseService.getKafkaEvaluationIndustry());
     }
 }

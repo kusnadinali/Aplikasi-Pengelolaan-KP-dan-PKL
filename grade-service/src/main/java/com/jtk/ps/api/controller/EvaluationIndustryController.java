@@ -33,12 +33,12 @@ public class EvaluationIndustryController {
         return ResponseHandler.generateResponse("Get all Evaluation Industry succeed",HttpStatus.OK, evaluationIndustryService.getAllEvaluation(prodiId));
     }
 
-    @GetMapping("/evaluation/{id}") //checked
+    @GetMapping("/{id}") //checked
     public ResponseEntity<Object> getValuationByEvaluation(@PathVariable("id") Integer idEvaluation){
         return ResponseHandler.generateResponse("Get Valuation By Evaluation Form succeed",HttpStatus.OK, evaluationIndustryService.getAllValuationV2ByEvaluation(idEvaluation));
     }
 
-    @PutMapping("/evaluation/{id}") //checked
+    @PutMapping("/{id}") //checked
     public ResponseEntity<Object> updateValuationByEvaluation(@PathVariable("id") Integer idEvaluation, @RequestBody List<ValuationV2Dto> request){
         evaluationIndustryService.quantizationEvaluation(request, idEvaluation);
         return ResponseHandler.generateResponse("Update Valuation succeed",HttpStatus.OK);

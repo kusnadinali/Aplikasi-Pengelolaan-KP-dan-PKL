@@ -9,6 +9,9 @@ import com.jtk.ps.api.dto.CourseFormRequestDto;
 import com.jtk.ps.api.dto.CourseFormResponseDto;
 import com.jtk.ps.api.dto.CriteriaEvaluationFormDto;
 import com.jtk.ps.api.dto.EvaluationFormResponseDto;
+import com.jtk.ps.api.dto.EvaluationIndustryDto;
+import com.jtk.ps.api.dto.EventStoreDto;
+import com.jtk.ps.api.dto.IsFinalizationDto;
 import com.jtk.ps.api.dto.RecapitulationCourseDto;
 import com.jtk.ps.api.dto.TypeOfAspectEvaluationDto;
 import com.jtk.ps.api.model.CourseForm;
@@ -29,7 +32,7 @@ public interface ICourseService {
 
     List<EvaluationFormResponseDto> getEvaluationForm(Integer prodiId);
 
-    List<CriteriaEvaluationFormDto> getCriteriaByEvaluationForm(String formType,Integer prodiId);
+    List<CriteriaEvaluationFormDto> getCriteriaByEvaluationForm(String formType, String formName, Integer prodiId);
 
     List<TypeOfAspectEvaluationDto> getTypeAspectEvaluationForm(String formType,Integer prodiId);
 
@@ -37,13 +40,21 @@ public interface ICourseService {
 
     List<ComponentAndCriteriasDto> getCriteriaComponentByCourseFormId(Integer idForm);
 
-    void updateOrInsertCriteriaComponent(ComponentAndCriteriasDto newCriterias);
+    void updateOrInsertCriteriaComponent(ComponentAndCriteriasDto newCriterias,Integer prodiId);
 
     List<RecapitulationCourseDto> getAllRecapitulationByYearAndProdiId(Integer year, Integer prodiId);
 
-    void finalizationAllCourseForm();
+    void finalizationAllCourseForm(Integer prodiId);
+
+    IsFinalizationDto isFinalization(Integer prodiId);
+
+    void cancelFinalization(Integer prodiId);
 
     ByteArrayInputStream loadCourse(Integer year, Integer prodiId);
     // void updateComponentCourse(Integer idComponent);
 
+    // testing kafka
+    List<EventStoreDto> getEventStore();
+
+    List<EvaluationIndustryDto> getKafkaEvaluationIndustry();
 }

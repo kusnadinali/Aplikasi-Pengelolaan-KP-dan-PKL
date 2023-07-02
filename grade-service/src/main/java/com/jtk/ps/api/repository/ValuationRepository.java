@@ -1,5 +1,6 @@
 package com.jtk.ps.api.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,7 @@ public interface ValuationRepository extends JpaRepository<Valuation, Integer>{
     
     @Query(value = "select v.* from valuation v join evaluation e on e.id = v.evaluation_id where e.participant_id = :participantId and e.num_evaluation = :numEvaluation and v.aspect_name like :aspectName", nativeQuery = true)
     Optional<Valuation> findValueByParticipant(String aspectName, Integer numEvaluation, Integer participantId);
+
+    @Query(value = "select * from valuation where evaluation_id = :id", nativeQuery = true)
+    List<Valuation> findByEvaluationId(Integer id);
 }

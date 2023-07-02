@@ -133,15 +133,25 @@ public class SeminarController {
     }
 
     @PostMapping("/form/finalization") // checked
-    public ResponseEntity<Object> finalization(){
-        seminarService.finalizationAllForm();
+    public ResponseEntity<Object> finalization(HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
+        seminarService.finalizationAllForm(prodiId);
         return ResponseHandler.generateResponse("Finalization All Seminar Form succeed",HttpStatus.OK);
     }
 
     @GetMapping("/form/finalization") // checked
-    public ResponseEntity<Object> isAllfinalization(){
-        return ResponseHandler.generateResponse("Finalization All Seminar Form succeed",HttpStatus.OK, seminarService.isFinalization());
+    public ResponseEntity<Object> isAllfinalization(HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
+        return ResponseHandler.generateResponse("Get All Finalization  Seminar Form succeed",HttpStatus.OK, seminarService.isFinalization(prodiId));
     }
+
+    @PostMapping("/form/finalization/cancel") // checked
+    public ResponseEntity<Object> cancelFinalization(HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
+        seminarService.cancelFinalizationAllForm(prodiId);
+        return ResponseHandler.generateResponse("Cancel Finalization All  Seminar Form succeed",HttpStatus.OK);
+    }
+
     // @PutMapping("/values/{id_form}")
     // public ResponseEntity<Object> updateValueSeminarByFormId(@PathVariable("id_form") Integer idForm,@RequestBody List<SeminarValuesDto> newValue){
         

@@ -1,5 +1,7 @@
 package com.jtk.ps.api.model;
 
+import java.time.LocalDateTime;
+
 import javax.persistence.*;
 
 import lombok.AllArgsConstructor;
@@ -41,4 +43,7 @@ public class Evaluation {
 
     @Column(name = "participant_id")
     private Integer participantId;
+
+    @Column(name = "update_date")
+    private LocalDateTime updateDate;
 }

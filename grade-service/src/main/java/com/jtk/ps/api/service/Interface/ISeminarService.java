@@ -47,11 +47,13 @@ public interface ISeminarService {
 
     public void finalizationByForm(Integer idForm);
 
-    public void finalizationAllForm();
+    public void finalizationAllForm(Integer prodiId);
 
     public ByteArrayInputStream loadSeminarType(Integer year, Integer prodiId, Integer formType);
 
     public ByteArrayInputStream loadSeminar(Integer year, Integer prodiId);
 
-    public IsFinalizationDto isFinalization();
+    public IsFinalizationDto isFinalization(Integer prodiId);
+
+    public void cancelFinalizationAllForm(Integer prodiId);
 }

@@ -375,18 +375,18 @@ public class SeminarServiceTest {
     @Test
     void finalizationSeminarByFormTest(){
         Integer year = Year.now().getValue();
-        when(seminarFormRepository.isAllFinalization(year)).thenReturn(1);
+        when(seminarFormRepository.isAllFinalization(year,1)).thenReturn(1);
 
         // Call the service method
-        IsFinalizationDto result = seminarService.isFinalization();
+        IsFinalizationDto result = seminarService.isFinalization(1);
 
         // Verify the response
         assertEquals(Integer.valueOf(1), result.getIsFinalization());
 
-        when(seminarFormRepository.isAllFinalization(year)).thenReturn(0);
+        when(seminarFormRepository.isAllFinalization(year,1)).thenReturn(0);
 
         // Call the service method
-        result = seminarService.isFinalization();
+        result = seminarService.isFinalization(1);
 
         // Verify the response
         assertEquals(Integer.valueOf(0), result.getIsFinalization());

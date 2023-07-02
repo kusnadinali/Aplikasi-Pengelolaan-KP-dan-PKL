@@ -1,6 +1,7 @@
 package com.jtk.ps.api.dto;
 
 import java.util.Date;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -29,4 +30,7 @@ public class SeminarFormDto {
 
     @JsonProperty("comment")
     private String comment;
+
+    @JsonProperty("seminarValues")
+    private List<SeminarValuesDto> seminarValues;
 }

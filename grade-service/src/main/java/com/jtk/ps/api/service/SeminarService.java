@@ -241,6 +241,21 @@ public class SeminarService implements ISeminarService{
             List<SeminarForm> seminarForms = seminarFormRepository.findAllByParticipantId(idParticipant);
             seminarForms.forEach(s -> {
                 SeminarFormDto temp = new SeminarFormDto();
+                List<SeminarValues> seminarValues = seminarValuesRepository.findAllByFormv2(s.getId());
+                List<SeminarValuesDto> seminarValuesDtos = new ArrayList<>();
+
+                seminarValues.forEach(v -> {
+                    SeminarValuesDto vDto = new SeminarValuesDto();
+                    vDto.setId(v.getId());
+                    if(v.getId() == 0){
+                        vDto.setId(null);
+                    }
+                    vDto.setSeminarCriteriaId(v.getSeminarCriteriaId());
+                    vDto.setSeminarFormId(v.getSeminarFormId());
+                    vDto.setValue(v.getValue());
+                    
+                    seminarValuesDtos.add(vDto);
+                });
 
                 temp.setId(s.getId());
                 temp.setParticipantId(s.getParticipantId());
@@ -248,6 +263,8 @@ public class SeminarService implements ISeminarService{
                 temp.setExaminerType(s.getExaminerType());
                 temp.setDateSeminar(s.getDateSeminar());
                 temp.setComment(s.getComment());
+                temp.setSeminarValues(seminarValuesDtos);
+                
                 
                 response.add(temp);
             });
@@ -421,9 +438,11 @@ public class SeminarService implements ISeminarService{
 
     
     @Override
-    public void finalizationAllForm() {
+    public void finalizationAllForm(Integer prodiId) {
         seminarFormRepository.findByIsFinalization(0).forEach(sf -> {
-            finalizationByForm(sf.getId());
+            if(participantRepository.findById(sf.getParticipantId()).get().getProdiId() == prodiId ){
+                finalizationByForm(sf.getId());
+            }
         });
     }
 
@@ -473,12 +492,20 @@ public class SeminarService implements ISeminarService{
     }
 
     @Override
-    public IsFinalizationDto isFinalization() {
+    public IsFinalizationDto isFinalization(Integer prodiId) {
         IsFinalizationDto response = new IsFinalizationDto();
 
-        response.setIsFinalization(seminarFormRepository.isAllFinalization(Integer.parseInt(Year.now().toString())));
+        response.setIsFinalization(seminarFormRepository.isAllFinalization(Integer.parseInt(Year.now().toString()), prodiId));
         return response;
     }
 
-    
+    @Override
+    public void cancelFinalizationAllForm(Integer prodiId){
+        List<SeminarForm> seminarForms = seminarFormRepository.findAllByYearAndProdi(Integer.parseInt(Year.now().toString()), prodiId);
+
+        seminarForms.forEach(s -> {
+            s.setIsFinalization(0);
+            seminarFormRepository.save(s);
+        });
+    }
 }

@@ -1,5 +1,6 @@
 package com.jtk.ps.api.service;
 
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -9,10 +10,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.jtk.ps.api.dto.EvaluationDto;
+import com.jtk.ps.api.dto.ParticipantEvaluationDto;
 import com.jtk.ps.api.dto.ValuationV2Dto;
 import com.jtk.ps.api.model.Evaluation;
+import com.jtk.ps.api.model.Participant;
 import com.jtk.ps.api.model.ValuationV2;
+import com.jtk.ps.api.repository.AccountRepository;
 import com.jtk.ps.api.repository.EvaluationRepository;
+import com.jtk.ps.api.repository.ParticipantRepository;
 import com.jtk.ps.api.repository.ValuationV2Repository;
 import com.jtk.ps.api.service.Interface.IEvaluationIndustryService;
 
@@ -25,6 +30,14 @@ public class EvaluationIndustryService implements IEvaluationIndustryService{
     @Autowired
     @Lazy
     private EvaluationRepository evaluationRepository;
+
+    @Autowired
+    @Lazy
+    private ParticipantRepository participantRepository;
+
+    @Autowired
+    @Lazy
+    private AccountRepository accountRepository;
     
     @Override
     public List<ValuationV2Dto> getAllValuationV2ByEvaluation(Integer evaluationId) {
@@ -38,7 +51,7 @@ public class EvaluationIndustryService implements IEvaluationIndustryService{
             temp.setId(v.getId());
             temp.setJustification(v.getJustification());
             temp.setLetterValue(v.getLetterValue());
-            temp.setNumericValue(v.getNumericValue() == null?0:v.getNumericValue());
+            temp.setNumericValue(v.getNumericValue());
 
             response.add(temp);
         });
@@ -46,25 +59,45 @@ public class EvaluationIndustryService implements IEvaluationIndustryService{
     }
 
     @Override
-    public List<EvaluationDto> getAllEvaluation(Integer prodiId) {
-        List<Evaluation> listEvaluations = evaluationRepository.findByProdiId(prodiId);
-        List<EvaluationDto> response = new ArrayList<>();
+    public List<ParticipantEvaluationDto> getAllEvaluation(Integer prodiId) {
         
-        for (Evaluation e : listEvaluations) {
-            EvaluationDto temp = new EvaluationDto();
-            temp.setComment(e.getComment());
-            temp.setCompanyId(e.getCompanyId());
-            temp.setId(e.getId());
-            temp.setNumEvaluation(e.getNumEvaluation());
-            temp.setParticipantId(e.getParticipantId());
-            temp.setPosition(e.getPosition());
-            temp.setProdiId(e.getProdiId());
-            temp.setStatus(e.getStatus());
-            temp.setYear(e.getYear());
+        // List<EvaluationDto> response = new ArrayList<>();
+        List<ParticipantEvaluationDto> responses = new ArrayList<>();
+        List<Participant> participants = participantRepository.findAllByYearAndProdi(Integer.parseInt(Year.now().toString()), prodiId);
+        
+        participants.forEach(p -> {
+            ParticipantEvaluationDto temp1 = new ParticipantEvaluationDto();
+            List<EvaluationDto> tempEvaluation = new ArrayList<>();
+            temp1.setId(p.getId());
 
-            response.add(temp);
-        }
-        return response;
+            accountRepository.findById(p.getAccountId()).ifPresent(a -> {
+                temp1.setNim(a.getUsername());
+            });
+
+            temp1.setName(p.getName());
+
+            List<Evaluation> listEvaluations = evaluationRepository.findByParticipantId(p.getId());
+            for (Evaluation e : listEvaluations) {
+                EvaluationDto temp = new EvaluationDto();
+                temp.setComment(e.getComment());
+                temp.setCompanyId(e.getCompanyId());
+                temp.setId(e.getId());
+                temp.setNumEvaluation(e.getNumEvaluation());
+                temp.setParticipantId(e.getParticipantId());
+                temp.setPosition(e.getPosition());
+                temp.setProdiId(e.getProdiId());
+                temp.setStatus(e.getStatus());
+                temp.setYear(e.getYear());
+    
+                tempEvaluation.add(temp);
+            }
+            temp1.setEvaluations(tempEvaluation);
+
+            responses.add(temp1);
+        });
+
+        
+        return responses;
     }
 
     @Override

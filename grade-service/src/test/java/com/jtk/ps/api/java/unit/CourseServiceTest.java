@@ -253,10 +253,10 @@ public class CourseServiceTest {
         when(seminarCriteriaRepository.findAllBySelected()).thenReturn(listSeminarCriteria);
         when(assessmentAspectRepository.findAllByNumEvaluation(Integer.parseInt(numEvaluation[1]),prodiId)).thenReturn(listAspectIndustry);
 
-        List<CriteriaEvaluationFormDto> resultPembimbing = courseService.getCriteriaByEvaluationForm(formNamePembimbing, prodiId);
-        List<CriteriaEvaluationFormDto> resultSA = courseService.getCriteriaByEvaluationForm(formNameSA, prodiId);
-        List<CriteriaEvaluationFormDto> resultSeminar = courseService.getCriteriaByEvaluationForm(formNameSeminar, prodiId);
-        List<CriteriaEvaluationFormDto> resultIndustry = courseService.getCriteriaByEvaluationForm(formTypeIndustri, prodiId);
+        List<CriteriaEvaluationFormDto> resultPembimbing = courseService.getCriteriaByEvaluationForm(formNamePembimbing,"Pembimbing", prodiId);
+        List<CriteriaEvaluationFormDto> resultSA = courseService.getCriteriaByEvaluationForm(formNameSA,"Self Assessment", prodiId);
+        List<CriteriaEvaluationFormDto> resultSeminar = courseService.getCriteriaByEvaluationForm(formNameSeminar,"Seminar", prodiId);
+        List<CriteriaEvaluationFormDto> resultIndustry = courseService.getCriteriaByEvaluationForm(formTypeIndustri,"Industri 1", prodiId);
 
         verify(supervisorGradeAspectRepository, times(1)).findAll();
         verify(selfAssessmentAspectRepository, times(1)).findAll();
@@ -444,7 +444,7 @@ public class CourseServiceTest {
         when(criteriaComponentCourseRepository.save(any(CriteriaComponentCourse.class))).thenReturn(null);
 
         // Memanggil metode yang akan diuji
-        courseService.updateOrInsertCriteriaComponent(newCriterias);
+        courseService.updateOrInsertCriteriaComponent(newCriterias,0);
 
         verify(criteriaComponentCourseRepository, times(1)).findAllByComponentId(1);
         verify(criteriaComponentCourseRepository, times(2)).save(any(CriteriaComponentCourse.class));
@@ -481,7 +481,7 @@ public class CourseServiceTest {
 
         when(courseFormRepository.findAllCourse(Integer.parseInt(Year.now().toString()))).thenReturn(courseAll);
 
-        courseService.finalizationAllCourseForm();
+        courseService.finalizationAllCourseForm(1);
 
         verify(courseFormRepository, times(1)).findAllCourse(Integer.parseInt(Year.now().toString()));
 

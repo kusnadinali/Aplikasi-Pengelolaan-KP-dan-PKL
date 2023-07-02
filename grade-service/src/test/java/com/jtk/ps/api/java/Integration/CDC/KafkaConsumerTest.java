@@ -146,7 +146,7 @@ public class KafkaConsumerTest {
     @Test
     void consumeEvaluationTest() throws InterruptedException {
         String topic = "evaluation_topic";
-        EvaluationKafka eventKafka = new EvaluationKafka(null,"eventComment", 2022, 1, 1, "WHO",1, 44, 181524012, "ADDED");
+        EvaluationKafka eventKafka = new EvaluationKafka(null,"eventComment", 2022, 1, 1, "WHO",1, 1, 2, "ADDED");
 
         String message = null;
         try {

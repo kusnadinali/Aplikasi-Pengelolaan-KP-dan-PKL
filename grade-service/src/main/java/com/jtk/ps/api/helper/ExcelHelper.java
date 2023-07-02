@@ -343,13 +343,13 @@ public class ExcelHelper {
           boldCellStyle.setWrapText(true);
           boldCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
           boldCellStyle.setAlignment(HorizontalAlignment.CENTER);
-
+          
           for(int i = 0; i < recap.size(); i++){
             
             sheetName = recap.get(i).getNameCourse();
             
             Sheet sheet = workbook.createSheet(sheetName);
-            System.out.println("listCriterias nilai ==>"+listCriterias.get(i));
+            // System.out.println("listCriterias nilai ==>"+listCriterias.get(i));
             rowCourses(sheet, boldCellStyle, listCriterias.get(i), headerNames, headerContentNames, recap.get(i).getParticipant_data());
           }
           
@@ -380,7 +380,7 @@ public class ExcelHelper {
             }
             Cell cell = headerRow.createCell(colBawah);
             cell.setCellValue(headerContentNames[col]);
-            if(merge != 0){
+            if(merge != 0 && (colBawah != (colBawah+merge-1))){
               sheet.addMergedRegion(new CellRangeAddress(0, 0, colBawah,(colBawah+merge-1)));
             }
             cell.setCellStyle(boldCellStyle);
@@ -391,7 +391,8 @@ public class ExcelHelper {
             sheet.addMergedRegion(new CellRangeAddress(0, 1, colBawah,colBawah));
             cell2.setCellStyle(boldCellStyle);
             colBawah +=1;
-          }
+            // System.out.println("test"+colBawah);
+          } 
 
           // buat header nilai akhir
           Cell cellAkhir = headerRow.createCell(colBawah);
@@ -399,7 +400,7 @@ public class ExcelHelper {
           sheet.addMergedRegion(new CellRangeAddress(0, 1, colBawah,colBawah));
           cellAkhir.setCellStyle(boldCellStyle);
 
-          // membuat subheader
+          // // membuat subheader
           Row subHeader = sheet.createRow(1);
           int colSub = 3;
           int jmlCriteria = 1;

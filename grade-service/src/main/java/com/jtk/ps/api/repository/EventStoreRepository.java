@@ -1,6 +1,8 @@
 package com.jtk.ps.api.repository;
 
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,4 +24,7 @@ public interface EventStoreRepository extends JpaRepository<EventStore, Long>{
 
     @Query(value = "select a.*  from event_store a WHERE YEAR(event_time) = :year and a.entity_id = 'criteria_component_course' and a.event_data_id = :criteriaId and (a.event_type = 'CRITERIA_COMPONENT_COURSE_UPDATE' or a.event_type  = 'CRITERIA_COMPONENT_COURSE_ADDED') ORDER BY event_time desc limit 1", nativeQuery = true)
     EventStore getLastUpdateBobotCriteriaComponent(Integer year, Integer criteriaId);
+
+    @Query(value = "select * from event_store order by event_time desc limit 10", nativeQuery = true)
+    List<EventStore> findAllTenEventDesc();
 }
