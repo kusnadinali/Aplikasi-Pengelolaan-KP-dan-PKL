@@ -146,7 +146,7 @@ public class KafkaConsumerTest {
     @Test
     void consumeEvaluationTest() throws InterruptedException {
         String topic = "evaluation_topic";
-        EvaluationKafka eventKafka = new EvaluationKafka(null,"eventComment", 2022, 1, 1, "WHO",1, 1, 2, "ADDED");
+        EvaluationKafka eventKafka = new EvaluationKafka(null,"eventComment", 2022, 1, 1, "WHO",0, 1, 1, "ADDED");
 
         String message = null;
         try {
@@ -170,7 +170,7 @@ public class KafkaConsumerTest {
     @Test
     void consumeValuationTest() throws InterruptedException {
         String topic = "valuation_topic";
-        ValuationKafka eventKafka = new ValuationKafka(null, "eventAspect", 80, 1, false, "ADDED");
+        ValuationKafka eventKafka = new ValuationKafka(null, "eventAspect", 85, 574, false, "ADDED");
 
         String message = null;
         try {

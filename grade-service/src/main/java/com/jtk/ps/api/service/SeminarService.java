@@ -109,7 +109,9 @@ public class SeminarService implements ISeminarService{
             temp.setId(c.getId());
             temp.setName(c.getCompanyName());
             temp.setParticipants(this.getAllParticipantByCompany(c.getId(),roleId, prodiId));
-            companyDtos.add(temp);
+            if(!temp.getParticipants().isEmpty()){
+                companyDtos.add(temp);
+            }
         });
         
         return companyDtos;
