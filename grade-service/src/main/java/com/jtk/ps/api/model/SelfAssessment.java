@@ -26,6 +26,9 @@ public class SelfAssessment {
     @Column(name = "finish_date")
     private Date finish_date;
 
-    @Column(name = "participant_id")
-    private Integer participantId;
+    // @Column(name = "participant_id")
+    // private Integer participantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id")
+    private Participant participant;
 }

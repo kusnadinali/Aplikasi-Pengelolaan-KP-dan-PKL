@@ -2,7 +2,6 @@ package com.jtk.ps.api.model;
 
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,7 +31,11 @@ public class Participant {
     @Column(name = "prodi_id")
     private Integer prodiId;
 
-    @Column(name = "account_id", nullable = false)
-    @JsonProperty("account_id")
-    private Integer accountId;
+    // @Column(name = "account_id", nullable = false)
+    // @JsonProperty("account_id")
+    // private Integer accountId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 }

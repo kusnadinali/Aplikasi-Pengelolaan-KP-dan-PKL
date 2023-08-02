@@ -2,9 +2,12 @@ package com.jtk.ps.api.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -29,8 +32,11 @@ public class ComponentCourse {
     @Column(name = "bobot_component")
     private Integer bobotComponent;
 
-    @Column(name = "course_id", nullable = false)
-    private Integer courseId;
+    // @Column(name = "course_id", nullable = false)
+    // private Integer courseId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    private CourseForm course;
 
     @Column(name = "is_average", nullable = false)
     private Integer isAverage;

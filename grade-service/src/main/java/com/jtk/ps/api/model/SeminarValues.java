@@ -23,11 +23,20 @@ public class SeminarValues {
     @Column(name = "value", nullable = false)
     private Float value;
 
-    @Column(name = "seminar_criteria_id", nullable = false)
+    // @Column(name = "seminar_criteria_id", nullable = false)
+    // @JsonProperty("seminar_criteria_id")
+    // private Integer seminarCriteriaId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seminar_criteria_id")
     @JsonProperty("seminar_criteria_id")
-    private Integer seminarCriteriaId;
+    private SeminarCriteria seminarCriteria;
 
-    @Column(name = "seminar_form_id", nullable = false)
+    // @Column(name = "seminar_form_id", nullable = false)
+    // @JsonProperty("seminar_form_id")
+    // private Integer seminarFormId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seminar_form_id")
     @JsonProperty("seminar_form_id")
-    private Integer seminarFormId;
+    private SeminarForm seminarForm;
+
 }

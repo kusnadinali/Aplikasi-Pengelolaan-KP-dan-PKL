@@ -126,7 +126,7 @@ public class SeminarService implements ISeminarService{
             Integer isFinalization = seminarFormRepository.isFinalizationByParticipantId(c.getId());
             if(!(isFinalization == 1 && roleId == 0) && c.getProdiId() == prodiId){
                 ParticipantDto tempParticipantDto = new ParticipantDto();
-                Optional<Account> account = accountRepository.findById(c.getAccountId());
+                Optional<Account> account = accountRepository.findById(c.getAccount().getId());
                 account.ifPresent(a -> {
                     tempParticipantDto.setNim(a.getUsername());
                 });
@@ -135,7 +135,7 @@ public class SeminarService implements ISeminarService{
                 tempParticipantDto.setProdi_id(c.getProdiId());
                 tempParticipantDto.setStatus_cv(c.getStatusCv());
                 tempParticipantDto.setYear(c.getYear());
-                tempParticipantDto.setAccount_id(c.getAccountId());
+                tempParticipantDto.setAccount_id(c.getAccount().getId());
                 
                 participantDtos.add(tempParticipantDto);
             }
@@ -151,8 +151,10 @@ public class SeminarService implements ISeminarService{
 
         newSeminarForm.setComment(seminarFormRequestDto.getComment());
         newSeminarForm.setDateSeminar(seminarFormRequestDto.getDateSeminar());
-        newSeminarForm.setExaminerId(seminarFormRequestDto.getExaminerId());
-        newSeminarForm.setParticipantId(seminarFormRequestDto.getParticipantId());
+        Optional<Account> account = accountRepository.findById(seminarFormRequestDto.getExaminerId());
+        newSeminarForm.setExaminer(account.get());
+        Optional<Participant> participant = participantRepository.findById(seminarFormRequestDto.getParticipantId());
+        newSeminarForm.setParticipant(participant.get());
         newSeminarForm.setExaminerType(seminarFormRequestDto.getExaminerType());
 
         newSeminarForm = seminarFormRepository.save(newSeminarForm);
@@ -252,16 +254,16 @@ public class SeminarService implements ISeminarService{
                     if(v.getId() == 0){
                         vDto.setId(null);
                     }
-                    vDto.setSeminarCriteriaId(v.getSeminarCriteriaId());
-                    vDto.setSeminarFormId(v.getSeminarFormId());
+                    vDto.setSeminarCriteriaId(v.getSeminarCriteria().getId());
+                    vDto.setSeminarFormId(v.getSeminarForm().getId());
                     vDto.setValue(v.getValue());
                     
                     seminarValuesDtos.add(vDto);
                 });
 
                 temp.setId(s.getId());
-                temp.setParticipantId(s.getParticipantId());
-                temp.setExaminerId(s.getExaminerId());
+                temp.setParticipantId(s.getParticipant().getId());
+                temp.setExaminerId(s.getExaminer().getId());
                 temp.setExaminerType(s.getExaminerType());
                 temp.setDateSeminar(s.getDateSeminar());
                 temp.setComment(s.getComment());
@@ -274,8 +276,8 @@ public class SeminarService implements ISeminarService{
             for(int i = 0; i<3; i++){
                 SeminarForm seminarForm = new SeminarForm();
                 SeminarFormDto temp = new SeminarFormDto();
-
-                seminarForm.setParticipantId(idParticipant);
+                Optional<Participant> p = participantRepository.findById(idParticipant);
+                seminarForm.setParticipant(p.get());
                 seminarForm.setExaminerType(i+1);
                 temp.setParticipantId(idParticipant);
                 temp.setExaminerType(i+1);
@@ -290,7 +292,7 @@ public class SeminarService implements ISeminarService{
         sResponseDto.setId(idParticipant);
         if(participant.isPresent()){
             sResponseDto.setName(participant.get().getName());
-            sResponseDto.setNim(accountRepository.findNimParticipant(participant.get().getAccountId()));
+            sResponseDto.setNim(participant.get().getAccount().getUsername());
         }
 
         return sResponseDto;
@@ -303,7 +305,8 @@ public class SeminarService implements ISeminarService{
         seminarForm.ifPresent(c ->{
             c.setComment(seminarFormRequestDto.getComment());
             c.setDateSeminar(seminarFormRequestDto.getDateSeminar());
-            c.setExaminerId(seminarFormRequestDto.getExaminerId());
+            Optional<Account> account = accountRepository.findById(seminarFormRequestDto.getExaminerId());
+            c.setExaminer(account.get());
             
             seminarFormRepository.save(c);
         });
@@ -320,8 +323,10 @@ public class SeminarService implements ISeminarService{
                 seminarValuesRepository.save(newSV);
             }else{
                 SeminarValues newSV = new SeminarValues();
-                newSV.setSeminarCriteriaId(c.getSeminarCriteriaId());
-                newSV.setSeminarFormId(idForm);
+                Optional<SeminarCriteria> scOptional = seminarCriteriaRepository.findById(c.getSeminarCriteriaId());
+                newSV.setSeminarCriteria(scOptional.get());
+                Optional<SeminarForm> sfOptional = seminarFormRepository.findById(idForm);
+                newSV.setSeminarForm(sfOptional.get());
                 newSV.setValue(c.getValue());
 
                 seminarValuesRepository.save(newSV);
@@ -344,16 +349,12 @@ public class SeminarService implements ISeminarService{
                 // proses memasukan identitas peserta
                 ParticipantDto participantDto = new ParticipantDto();
                 participantDto.setId(p.getId());
-                participantDto.setAccount_id(p.getAccountId());
+                participantDto.setAccount_id(p.getAccount().getId());
                 participantDto.setName(p.getName());
                 participantDto.setProdi_id(p.getProdiId());
                 participantDto.setStatus_cv(p.getYear());
                 participantDto.setYear(p.getYear());
-
-                Optional<Account> account = accountRepository.findById(p.getAccountId());
-                account.ifPresent(a -> {
-                    participantDto.setNim(a.getUsername());
-                });
+                participantDto.setNim(p.getAccount().getUsername());
 
                 // proses memasukan nilai
                 SeminarValueParticipantDto seminarValueParticipantDto = new SeminarValueParticipantDto();
@@ -400,13 +401,13 @@ public class SeminarService implements ISeminarService{
                 // proses memasukan identitas peserta
                 ParticipantDto participantDto = new ParticipantDto();
                 participantDto.setId(p.getId());
-                participantDto.setAccount_id(p.getAccountId());
+                participantDto.setAccount_id(p.getAccount().getId());
                 participantDto.setName(p.getName());
                 participantDto.setProdi_id(p.getProdiId());
                 participantDto.setStatus_cv(p.getYear());
                 participantDto.setYear(p.getYear());
 
-                Optional<Account> account = accountRepository.findById(p.getAccountId());
+                Optional<Account> account = accountRepository.findById(p.getAccount().getId());
                 account.ifPresent(a -> {
                     participantDto.setNim(a.getUsername());
                 });
@@ -442,7 +443,7 @@ public class SeminarService implements ISeminarService{
     @Override
     public void finalizationAllForm(Integer prodiId) {
         seminarFormRepository.findByIsFinalization(0).forEach(sf -> {
-            if(participantRepository.findById(sf.getParticipantId()).get().getProdiId() == prodiId ){
+            if(participantRepository.findById(sf.getParticipant().getId()).get().getProdiId() == prodiId ){
                 finalizationByForm(sf.getId());
             }
         });

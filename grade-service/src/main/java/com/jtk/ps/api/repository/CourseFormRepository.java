@@ -10,6 +10,8 @@ import com.jtk.ps.api.model.CourseForm;
 
 @Repository
 public interface CourseFormRepository extends JpaRepository<CourseForm,Integer>{
+
+    List<CourseForm> findByTahunAjaranStartAndProdiId(Integer tahunAjaranStart, Integer prodiId);
     
     @Query(value = "select * from course_form where is_deleted = 0 and tahun_ajaran_start = :year", nativeQuery = true)
     List<CourseForm> findAllCourse(Integer year);

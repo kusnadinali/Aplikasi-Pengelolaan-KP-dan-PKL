@@ -17,11 +17,17 @@ public class TotalCourses {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "course_id")
-    private Integer courseId;
+    // @Column(name = "course_id")
+    // private Integer courseId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id")
+    private CourseForm courseForm;
 
-    @Column(name = "participant_id")
-    private Integer participantId;
+    // @Column(name = "participant_id")
+    // private Integer participantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id")
+    private Participant participant;
 
     private Float value;
 }

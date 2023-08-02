@@ -8,10 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.jtk.ps.api.model.Participant;
+import com.jtk.ps.api.model.SeminarCriteria;
 import com.jtk.ps.api.model.SeminarValues;
 
 @Repository
 public interface SeminarValuesRepository extends JpaRepository<SeminarValues,Integer>{
+
+    Optional<SeminarValues> findBySeminarCriteriaAndSeminarForm_ParticipantAndSeminarForm_ExaminerType(SeminarCriteria seminarCriteria, Participant participant, Integer examinerType);
     
     @Query(value = "select exists(select * from seminar_values sf where sf.seminar_form_id = :form and sf.seminar_criteria_id = :criteria)",nativeQuery = true)
     Integer isFormWithCriteriaExist(@Param("form") Integer form, @Param("criteria") Integer criteria);

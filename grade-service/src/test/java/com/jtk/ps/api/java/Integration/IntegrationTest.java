@@ -7,7 +7,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +34,7 @@ public class IntegrationTest {
         String username;
         String password;
 
-        MockHttpServletRequest req = new MockHttpServletRequest();
+        // MockHttpServletRequest req = new MockHttpServletRequest();
 
         if(Objects.equals(role, Constant.Role.COMMITTEE)){
             username = "panitiad3";

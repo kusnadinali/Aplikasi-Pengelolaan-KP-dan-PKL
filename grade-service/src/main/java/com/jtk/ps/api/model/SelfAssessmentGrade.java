@@ -21,13 +21,22 @@ public class SelfAssessmentGrade {
     @Column(name = "grade_self_assessment")
     private Integer valueSelfAssessment;
 
-    @Column(name = "self_assessment_id")
-    private Integer selfAssessmentId;
+    // @Column(name = "self_assessment_id")
+    // private Integer selfAssessmentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "self_assessment_id")
+    private SelfAssessment selfAssessment;
 
-    @Column(name = "criteria_self_assessment_id")
-    private Integer criteriaSelfAssessmentId;
+    // @Column(name = "criteria_self_assessment_id")
+    // private Integer criteriaSelfAssessmentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criteria_self_assessment_id")
+    private SelfAssessmentAspect selfAssessmentAspect;
 
-    @Column(name = "participant_id")
-    private Integer participantId;
+    // @Column(name = "participant_id")
+    // private Integer participantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id")
+    private Participant participant;
 
 }

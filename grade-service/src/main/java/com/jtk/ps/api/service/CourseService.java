@@ -37,9 +37,7 @@ import com.jtk.ps.api.dto.RecapitulationCriteriaDto;
 import com.jtk.ps.api.dto.RecapitulationParticipantDto;
 import com.jtk.ps.api.dto.TypeOfAspectEvaluationDto;
 import com.jtk.ps.api.helper.ExcelHelper;
-import com.jtk.ps.api.model.Account;
 import com.jtk.ps.api.model.AssessmentAspect;
-import com.jtk.ps.api.model.Company;
 import com.jtk.ps.api.model.ComponentCourse;
 import com.jtk.ps.api.model.CourseForm;
 import com.jtk.ps.api.model.CourseValues;
@@ -221,7 +219,8 @@ public class CourseService implements ICourseService{
             ComponentCourse componentCourse = new ComponentCourse();
             
             componentCourse.setBobotComponent(0);
-            componentCourse.setCourseId(idForm);
+            Optional<CourseForm> course = courseFormRepository.findById(idForm);
+            componentCourse.setCourse(course.get());
             componentCourse.setIsAverage(1);
             componentCourse.setName(component[i]);
 
@@ -456,7 +455,7 @@ public class CourseService implements ICourseService{
             ComponentCourseDto temp = new ComponentCourseDto();
             
             temp.setBobotComponent(c.getBobotComponent());
-            temp.setCourseId(c.getCourseId());
+            temp.setCourseId(c.getCourse().getId());
             temp.setId(c.getId());
             temp.setIsAverage(c.getIsAverage());
             temp.setName(c.getName());
@@ -473,7 +472,8 @@ public class CourseService implements ICourseService{
 
             componentCourse.ifPresent(p -> {
                 p.setBobotComponent(c.getBobotComponent());
-                p.setCourseId(c.getCourseId());
+                Optional<CourseForm> course = courseFormRepository.findById(c.getCourseId());
+                p.setCourse(course.get());
                 p.setIsAverage(c.getIsAverage());
                 p.setName(c.getName());
 
@@ -505,24 +505,24 @@ public class CourseService implements ICourseService{
             criteriaComponentCourses.forEach(p -> {
                 CriteriaBodyDto criteriaTemp = new CriteriaBodyDto();
 
-                criteriaTemp.setComponentId(p.getComponentId());
+                criteriaTemp.setComponentId(p.getComponentCourse().getId());
                 criteriaTemp.setId(p.getId());
                 criteriaTemp.setNameForm(p.getNameForm());
                 criteriaTemp.setTypeForm(p.getTypeForm());
                 criteriaTemp.setBobotCriteria(p.getBobotCriteria());
 
-                if(p.getIndustryCriteriaId() != null){
-                    criteriaTemp.setAspectFormId(p.getIndustryCriteriaId());
-                    criteriaTemp.setAspectName(criteriaComponentCourseRepository.getNameAspectFromIndustry(p.getIndustryCriteriaId()));
-                }else if(p.getSelfAssessmentCriteriaId() != null){
-                    criteriaTemp.setAspectFormId(p.getSelfAssessmentCriteriaId());
-                    criteriaTemp.setAspectName(criteriaComponentCourseRepository.getNameAspectFromSelfAssessment(p.getSelfAssessmentCriteriaId()));
-                }else if(p.getSeminarCriteriaId() != null){
-                    criteriaTemp.setAspectFormId(p.getSeminarCriteriaId());
-                    criteriaTemp.setAspectName(criteriaComponentCourseRepository.getNameAspectFromSeminar(p.getSeminarCriteriaId()));
-                }else if(p.getSupervisorCriteriaId() != null){
-                    criteriaTemp.setAspectFormId(p.getSupervisorCriteriaId());
-                    criteriaTemp.setAspectName(criteriaComponentCourseRepository.getNameAspectFromSupervisor(p.getSupervisorCriteriaId()));
+                if(p.getIndustryCriteria() != null){
+                    criteriaTemp.setAspectFormId(p.getIndustryCriteria().getId());
+                    criteriaTemp.setAspectName(criteriaComponentCourseRepository.getNameAspectFromIndustry(p.getIndustryCriteria().getId()));
+                }else if(p.getSelfAssessmentCriteria() != null){
+                    criteriaTemp.setAspectFormId(p.getSelfAssessmentCriteria().getId());
+                    criteriaTemp.setAspectName(criteriaComponentCourseRepository.getNameAspectFromSelfAssessment(p.getSelfAssessmentCriteria().getId()));
+                }else if(p.getSeminarCriteria() != null){
+                    criteriaTemp.setAspectFormId(p.getSeminarCriteria().getId());
+                    criteriaTemp.setAspectName(criteriaComponentCourseRepository.getNameAspectFromSeminar(p.getSeminarCriteria().getId()));
+                }else if(p.getSupervisorCriteria() != null){
+                    criteriaTemp.setAspectFormId(p.getSupervisorCriteria().getId());
+                    criteriaTemp.setAspectName(criteriaComponentCourseRepository.getNameAspectFromSupervisor(p.getSupervisorCriteria().getId()));
                 }
 
                 criteriaForResponses.add(criteriaTemp);
@@ -578,7 +578,7 @@ public class CourseService implements ICourseService{
         List<CriteriaBodyDto> tempCriteriasDto = new ArrayList<>();
 
         List<Integer> doneUpdateOrDelete = new ArrayList<>();
-        System.out.println("new criteria ==>"+prodiId);
+        
         for(CriteriaBodyDto c : newCriterias.getCriteria_data()){
             if(c.getAspectName().equals("Semua aspek")){
                 for(CriteriaEvaluationFormDto e : getCriteriaByEvaluationForm(c.getTypeForm(),c.getNameForm(),prodiId)){
@@ -614,22 +614,26 @@ public class CourseService implements ICourseService{
                     o.setTypeForm(n.getTypeForm());
 
                     // menghapus fk semua paada kriteria
-                    o.setIndustryCriteriaId(null);
-                    o.setSeminarCriteriaId(null);
-                    o.setSupervisorCriteriaId(null);
-                    o.setSelfAssessmentCriteriaId(null);
+                    o.setIndustryCriteria(null);
+                    o.setSeminarCriteria(null);
+                    o.setSupervisorCriteria(null);
+                    o.setSelfAssessmentCriteria(null);
                     switch(n.getNameForm()){
                         case "Industri":
-                            o.setIndustryCriteriaId(n.getAspectFormId());
+                            Optional<AssessmentAspect> assessmentAspect = assessmentAspectRepository.findById(n.getAspectFormId());
+                            o.setIndustryCriteria(assessmentAspect.get());
                             break;
                         case "Seminar":
-                            o.setSeminarCriteriaId(n.getAspectFormId());
+                            Optional<SeminarCriteria> seminarCriteria = seminarCriteriaRepository.findById(n.getAspectFormId());
+                            o.setSeminarCriteria(seminarCriteria.get());
                             break;
                         case "Pembimbing":
-                            o.setSupervisorCriteriaId(n.getAspectFormId());
+                            Optional<SupervisorGradeAspect> supervisorAspect = supervisorGradeAspectRepository.findById(n.getAspectFormId());
+                            o.setSupervisorCriteria(supervisorAspect.get());
                             break;
                         case "Self Assessment":
-                            o.setSelfAssessmentCriteriaId(n.getAspectFormId());
+                            Optional<SelfAssessmentAspect> selfAssessmentAspect = selfAssessmentAspectRepository.findById(n.getAspectFormId());
+                            o.setSelfAssessmentCriteria(selfAssessmentAspect.get());
                             break;
                     }
 
@@ -669,23 +673,28 @@ public class CourseService implements ICourseService{
                 CriteriaComponentCourse newTemp = new CriteriaComponentCourse();
                 
                 newTemp.setBobotCriteria(n.getBobotCriteria());
-                newTemp.setComponentId(n.getComponentId());
+                Optional<ComponentCourse> componentCourse = componentCourseRepository.findById(n.getComponentId());
+                newTemp.setComponentCourse(componentCourse.get());
                 newTemp.setNameForm(n.getNameForm());
                 newTemp.setTypeForm(n.getTypeForm());
                 newTemp.setIsDeleted(0);
                 
                 switch(n.getNameForm()){
                     case "Industri":
-                        newTemp.setIndustryCriteriaId(n.getAspectFormId());
+                        Optional<AssessmentAspect> assessmentAspect = assessmentAspectRepository.findById(n.getAspectFormId());
+                        newTemp.setIndustryCriteria(assessmentAspect.get());
                         break;
                     case "Seminar":
-                        newTemp.setSeminarCriteriaId(n.getAspectFormId());
+                        Optional<SeminarCriteria> seminarCriteria = seminarCriteriaRepository.findById(n.getAspectFormId());
+                        newTemp.setSeminarCriteria(seminarCriteria.get());
                         break;
                     case "Pembimbing":
-                        newTemp.setSupervisorCriteriaId(n.getAspectFormId());
+                        Optional<SupervisorGradeAspect> supervisorAspect = supervisorGradeAspectRepository.findById(n.getAspectFormId());
+                        newTemp.setSupervisorCriteria(supervisorAspect.get());
                         break;
                     case "Self Assessment":
-                        newTemp.setSelfAssessmentCriteriaId(n.getAspectFormId());
+                        Optional<SelfAssessmentAspect> selfAssessmentAspect = selfAssessmentAspectRepository.findById(n.getAspectFormId());
+                        newTemp.setSelfAssessmentCriteria(selfAssessmentAspect.get());
                         break;
                 }
                 newTemp = criteriaComponentCourseRepository.save(newTemp);
@@ -746,11 +755,7 @@ public class CourseService implements ICourseService{
 
             tempParticipantDto.setIdParticipant(p.getId());
             tempParticipantDto.setName(p.getName());
-
-            Optional<Account> account = accountRepository.findById(p.getAccountId());
-            account.ifPresent(a -> {
-                tempParticipantDto.setNim(a.getUsername());
-            });
+            tempParticipantDto.setNim(p.getAccount().getUsername());
 
             // ***************************** Component *****************************
             tempParticipantDto.setComponent_data(
@@ -767,8 +772,10 @@ public class CourseService implements ICourseService{
                     totalCoursesRepository.save(oldTotalCourses.get());
                 }else{
                     TotalCourses newTotalCourses = new TotalCourses();
-                    newTotalCourses.setCourseId(form.getId());
-                    newTotalCourses.setParticipantId(p.getId());
+                    Optional<CourseForm> course = courseFormRepository.findById(form.getId());
+                    newTotalCourses.setCourseForm(course.get());
+                    Optional<Participant> participant = participantRepository.findById(p.getId());
+                    newTotalCourses.setParticipant(participant.get());
                     newTotalCourses.setValue(
                         getTotalCourse(tempParticipantDto.getComponent_data())
                     );
@@ -828,8 +835,10 @@ public class CourseService implements ICourseService{
                     totalComponentsRepository.save(oldTotalComponents.get());
                 }else{
                     TotalComponents newTotalComponents = new TotalComponents();
-                    newTotalComponents.setComponentId(c.getId());
-                    newTotalComponents.setParticipantId(participant.getId());
+                    Optional<ComponentCourse> componentCourse = componentCourseRepository.findById(c.getId());
+                    newTotalComponents.setComponentCourse(componentCourse.get());
+                    Optional<Participant> participantOptional = participantRepository.findById(participant.getId());
+                    newTotalComponents.setParticipant(participantOptional.get());
                     newTotalComponents.setValue(
                         getTotalComponent(isAverage,tempRecapitulationComponentDto.getCriteria_data())
                     );
@@ -885,7 +894,7 @@ public class CourseService implements ICourseService{
             tempRecapitulationCriteriaDto.setBobot(d.getBobotCriteria());
             tempRecapitulationCriteriaDto.setNameForm(d.getNameForm());
             tempRecapitulationCriteriaDto.setFormType(d.getTypeForm());
-            tempRecapitulationCriteriaDto.setNameAspect(getAspectNameInForm(d.getIndustryCriteriaId(), d.getSeminarCriteriaId(), d.getSupervisorCriteriaId(), d.getSelfAssessmentCriteriaId(), d.getNameForm()));
+            tempRecapitulationCriteriaDto.setNameAspect(getAspectNameInForm(d.getIndustryCriteria().getId(), d.getSeminarCriteria().getId(), d.getSupervisorCriteria().getId(), d.getSelfAssessmentCriteria().getId(), d.getNameForm()));
             tempRecapitulationCriteriaDto.setIdCriteria(d.getId());
             tempRecapitulationCriteriaDto.setValue(findValueByCriteriaIdAndParticipantId(d,participant.getId(),prodiId));
 
@@ -913,13 +922,15 @@ public class CourseService implements ICourseService{
             switch(criteria.getNameForm()){
                 case "Industri":
                 //    mengambil nilai pada form 
-                    Optional<Valuation> vIndustri = valuationRepository.findValueByParticipant(criteriaComponentCourseRepository.getNameAspectFromIndustry(criteria.getIndustryCriteriaId()),Integer.parseInt(criteria.getTypeForm().substring(9)), pId);
+                    Optional<Valuation> vIndustri = valuationRepository.findValueByParticipant(criteriaComponentCourseRepository.getNameAspectFromIndustry(criteria.getIndustryCriteria().getId()),Integer.parseInt(criteria.getTypeForm().substring(9)), pId);
                     if(vIndustri.isPresent()){
                         value = (float) vIndustri.get().getValue();
-                        newValues.setCriteriaId(criteria.getId());
-                        newValues.setIndustryValuesId(vIndustri.get().getId());
+                        Optional<CriteriaComponentCourse> cccOptional = criteriaComponentCourseRepository.findById(criteria.getId());
+                        newValues.setCriteriaComponentCourse(cccOptional.get());
+                        newValues.setValuation(vIndustri.get());
                         newValues.setCreated_date(LocalDate.now());
-                        newValues.setParticipantId(pId);
+                        Optional<Participant> pOptional = participantRepository.findById(pId);
+                        newValues.setParticipant(pOptional.get());
                         newValues.setValue(value);
 
                         courseValuesRepository.save(newValues);
@@ -928,13 +939,15 @@ public class CourseService implements ICourseService{
                     }
                     break;
                 case "Seminar":
-                    Optional<SeminarValues> sv = seminarValuesRepository.findByTypeExaminer(criteria.getSeminarCriteriaId(), pId, criteria.getTypeForm());
+                    Optional<SeminarValues> sv = seminarValuesRepository.findByTypeExaminer(criteria.getSeminarCriteria().getId(), pId, criteria.getTypeForm());
 
                     if(sv.isPresent()){
                         newValues.setCreated_date(LocalDate.now());
-                        newValues.setCriteriaId(criteria.getId());
-                        newValues.setSeminarValuesId(sv.get().getId());
-                        newValues.setParticipantId(pId);
+                        Optional<CriteriaComponentCourse> cccOptional = criteriaComponentCourseRepository.findById(criteria.getId());
+                        newValues.setCriteriaComponentCourse(cccOptional.get());
+                        newValues.setSeminarValues(sv.get());
+                        Optional<Participant> pOptional = participantRepository.findById(pId);
+                        newValues.setParticipant(pOptional.get());
                         newValues.setValue(sv.get().getValue());
 
                         courseValuesRepository.save(newValues);
@@ -945,13 +958,15 @@ public class CourseService implements ICourseService{
                     }
                     break;
                 case "Pembimbing":
-                    Optional<SupervisorGradeResult> sGrade = supervisorGradeResultRepository.findValueByPhase(criteria.getSupervisorCriteriaId(), pId,criteria.getTypeForm().replaceAll("[^0-9]+", ""));
+                    Optional<SupervisorGradeResult> sGrade = supervisorGradeResultRepository.findValueByPhase(criteria.getSupervisorCriteria().getId(), pId,criteria.getTypeForm().replaceAll("[^0-9]+", ""));
                     if(sGrade.isPresent()){
-                        Optional<SupervisorGradeAspect> sAspect = supervisorGradeAspectRepository.findById(sGrade.get().getAspectId());
+                        Optional<SupervisorGradeAspect> sAspect = supervisorGradeAspectRepository.findById(sGrade.get().getSupervisorGradeAspect().getId());
                         newValues.setCreated_date(LocalDate.now());
-                        newValues.setCriteriaId(criteria.getId());
-                        newValues.setMentorValuesId(sGrade.get().getId());
-                        newValues.setParticipantId(pId);
+                        Optional<CriteriaComponentCourse> cccOptional = criteriaComponentCourseRepository.findById(criteria.getId());
+                        newValues.setCriteriaComponentCourse(cccOptional.get());
+                        newValues.setMentorValues(sGrade.get());
+                        Optional<Participant> pOptional = participantRepository.findById(pId);
+                        newValues.setParticipant(pOptional.get());
 
                         float sValue = (sGrade.get().getValue()/sAspect.get().getGradeWeight())*100;
                         newValues.setValue(sValue);
@@ -964,40 +979,40 @@ public class CourseService implements ICourseService{
                     }
                     break;
                 case "Self Assessment":
-                    value = selfAssessmentGradeRepository.findValuesByCriteriaIdAndParticipantId(criteria.getSelfAssessmentCriteriaId(), pId);
-                        String prodiName = "";
-                        if(prodiId == 0){
-                            prodiName = "KP";
+                    value = selfAssessmentGradeRepository.findValuesByCriteriaIdAndParticipantId(criteria.getSelfAssessmentCriteria().getId(), pId);
+                    String prodiName = "";
+                    if(prodiId == 0){
+                        prodiName = "KP";
+                    }else{
+                        prodiName = "PKL";
+                    }
+                    
+                    Optional<Timeline> timeline = timelineRepository.findByName("Pelaksanaan "+prodiName);
+
+                    if(timeline.isPresent()){
+                        LocalDate startDate = timeline.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+                        // Menyesuaikan tanggal awal dengan minggu ke-3
+                        LocalDate week = startDate.with(TemporalAdjusters.dayOfWeekInMonth(Integer.parseInt(criteria.getTypeForm().replaceAll("[^0-9]+", "")), DayOfWeek.MONDAY));
+
+                        Optional<SelfAssessmentGrade> selfAssessmentGrade = selfAssessmentGradeRepository.findByStartDate(criteria.getSelfAssessmentCriteria().getId(), pId, week.toString());
+                        
+                        if(selfAssessmentGrade.isPresent()){
+                            newValues.setCreated_date(LocalDate.now());
+                            Optional<CriteriaComponentCourse> cccOptional = criteriaComponentCourseRepository.findById(criteria.getId());
+                            newValues.setCriteriaComponentCourse(cccOptional.get());
+                            newValues.setSelfAssessmentValues(selfAssessmentGrade.get());
+                            newValues.setValue((float) selfAssessmentGrade.get().getValueSelfAssessment());
+                            Optional<Participant> pOptional = participantRepository.findById(pId);
+                            newValues.setParticipant(pOptional.get());
+
+                            courseValuesRepository.save(newValues);
+
+                            value = (float) selfAssessmentGrade.get().getValueSelfAssessment();
                         }else{
-                            prodiName = "PKL";
+                            value = (float) 0;
                         }
-                        
-                        Optional<Timeline> timeline = timelineRepository.findByName("Pelaksanaan "+prodiName);
-
-                        if(timeline.isPresent()){
-                            LocalDate startDate = timeline.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-                            // Menyesuaikan tanggal awal dengan minggu ke-3
-                            LocalDate week = startDate.with(TemporalAdjusters.dayOfWeekInMonth(Integer.parseInt(criteria.getTypeForm().replaceAll("[^0-9]+", "")), DayOfWeek.MONDAY));
-
-                            Optional<SelfAssessmentGrade> selfAssessmentGrade = selfAssessmentGradeRepository.findByStartDate(criteria.getSelfAssessmentCriteriaId(), pId, week.toString());
-                            
-                            if(selfAssessmentGrade.isPresent()){
-                                newValues.setCreated_date(LocalDate.now());
-                                newValues.setCriteriaId(criteria.getId());
-                                newValues.setSelfAssessmentValuesId(selfAssessmentGrade.get().getId());
-                                newValues.setValue((float) selfAssessmentGrade.get().getValueSelfAssessment());
-                                newValues.setParticipantId(pId);
-
-                                courseValuesRepository.save(newValues);
-
-                                value = (float) selfAssessmentGrade.get().getValueSelfAssessment();
-                            }else{
-                                value = (float) 0;
-                            }
-                        }
-
-                        
+                    }
                     break;
             }
         }
@@ -1030,6 +1045,182 @@ public class CourseService implements ICourseService{
         }
 
         return aspectName;
+    }
+
+// versi 2 get recapitulation
+    @Override
+    public List<RecapitulationCourseDto> getRecapitulationV2(Integer year, Integer prodiId){
+        List<RecapitulationCourseDto> rCourse = new ArrayList<>();
+        List<CourseForm> courseForms = courseFormRepository.findByTahunAjaranStartAndProdiId(year, prodiId);
+        List<Participant> participants = participantRepository.findByYearAndProdiId(year, prodiId);
+        String prodiName = "";
+        if(prodiId == 0){
+            prodiName = "KP";
+        }else{
+            prodiName = "PKL";
+        }
+        
+        Optional<Timeline> timeline = timelineRepository.findByName("Pelaksanaan "+prodiName);
+
+        courseForms.forEach(cf -> {
+            RecapitulationCourseDto rCourseTemp = new RecapitulationCourseDto();
+            List<RecapitulationParticipantDto> rParticipants = new ArrayList<>();
+            List<ComponentCourse> componentCourses = componentCourseRepository.findByCourse(cf);
+            
+            rCourseTemp.setIdCourse(cf.getId());
+            rCourseTemp.setKode(cf.getKode());
+            rCourseTemp.setNameCourse(cf.getName());
+            
+            participants.forEach(p -> {
+                RecapitulationParticipantDto rParticipantTemp = new RecapitulationParticipantDto();
+                List<RecapitulationComponentDto> rComponents = new ArrayList<>();
+
+                rParticipantTemp.setIdParticipant(p.getId());
+                rParticipantTemp.setName(p.getName());
+                rParticipantTemp.setNim(p.getAccount().getUsername());
+
+                componentCourses.forEach(cc -> {
+                    RecapitulationComponentDto rComponentTemp = new RecapitulationComponentDto();
+                    List<RecapitulationCriteriaDto> rCriterias = new ArrayList<>();
+                    List<CriteriaComponentCourse> criterias = criteriaComponentCourseRepository.findByComponentCourse(cc);
+
+                    rComponentTemp.setIdComponent(cc.getId());
+                    rComponentTemp.setNameComponent(cc.getName());
+                    rComponentTemp.setBobotComponent(cc.getBobotComponent());
+                    
+                    criterias.forEach(c -> {
+                        RecapitulationCriteriaDto rCriteriaTemp = new RecapitulationCriteriaDto();
+                        Optional<CourseValues> courseValue = courseValuesRepository.findByCriteriaComponentCourseAndParticipant(c, p);
+                        String nameAspect = "";
+
+                        if(c.getIndustryCriteria() != null){
+                            nameAspect = c.getIndustryCriteria().getAspectName();
+                        }else if(c.getSelfAssessmentCriteria() != null){
+                            nameAspect = c.getSelfAssessmentCriteria().getName();
+                        }else if(c.getSeminarCriteria() != null){
+                            nameAspect = c.getSeminarCriteria().getCriteriaName();
+                        }else if(c.getSupervisorCriteria() != null){
+                            nameAspect = c.getSupervisorCriteria().getDescription();
+                        }
+                        rCriteriaTemp.setBobot(c.getBobotCriteria());
+                        rCriteriaTemp.setFormType(c.getTypeForm());
+                        rCriteriaTemp.setIdCriteria(c.getId());
+                        rCriteriaTemp.setNameAspect(nameAspect);
+                        rCriteriaTemp.setNameForm(c.getNameForm());
+
+                        // menginputkan nilai peserta
+                        if(courseValue.isPresent()){
+                            if(cf.getIsFinalization() == 0){
+                                // ambil nilai lagi
+                                if(c.getIndustryCriteria() != null){
+                                    Optional<Valuation> industryValue = valuationRepository.findByAspectNameAndEvaluation_ParticipantAndEvaluation_NumEvaluation(c.getIndustryCriteria().getAspectName(), p, c.getIndustryCriteria().getEvaluationForm().getNumEvaluation());
+                                    courseValue.get().setValue((float) industryValue.get().getValue());
+                                    rCriteriaTemp.setValue((float) industryValue.get().getValue());
+                                }else if(c.getSelfAssessmentCriteria() != null){
+                                    LocalDate startDate = timeline.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+                                    // Menyesuaikan tanggal awal dengan minggu ke-3
+                                    LocalDate week = startDate.with(TemporalAdjusters.dayOfWeekInMonth(Integer.parseInt(c.getTypeForm().replaceAll("[^0-9]+", "")), DayOfWeek.MONDAY));
+
+                                    Optional<SelfAssessmentGrade> selfAssessmentValue = selfAssessmentGradeRepository.findByStartDate(c.getSelfAssessmentCriteria().getId(), p.getId(), week.toString());
+                                    courseValue.get().setValue((float) selfAssessmentValue.get().getValueSelfAssessment());
+                                    rCriteriaTemp.setValue((float) selfAssessmentValue.get().getValueSelfAssessment());
+                                }else if(c.getSeminarCriteria() != null){
+                                    Optional<SeminarValues> seminarValue = seminarValuesRepository.findBySeminarCriteriaAndSeminarForm_ParticipantAndSeminarForm_ExaminerType(c.getSeminarCriteria(), p, Integer.parseInt(c.getTypeForm().replaceAll("[^0-9]+", "")));
+                                    courseValue.get().setValue((float) seminarValue.get().getValue());
+                                    rCriteriaTemp.setValue((float) seminarValue.get().getValue());
+                                }else if(c.getSupervisorCriteria() != null){
+                                    Optional<SupervisorGradeResult> supervisorValue = supervisorGradeResultRepository.findBySupervisorGradeAspectAndSupervisorGrade_ParticipantAndSupervisorGrade_Phase(c.getSupervisorCriteria(), p, Integer.parseInt(c.getTypeForm().substring(c.getTypeForm().lastIndexOf(" ") + 1)));
+                                    courseValue.get().setValue((float) supervisorValue.get().getValue());
+                                    rCriteriaTemp.setValue((float) supervisorValue.get().getValue());
+                                }
+                                courseValuesRepository.save(courseValue.get());
+                            }else{
+                                // dia ambil dari yang udah ada
+                                rCriteriaTemp.setValue(courseValue.get().getValue());
+                            }
+                        }else{
+                            // buat row baru
+                            // ambil nilai lagi
+                            CourseValues newCourseValue = new CourseValues();
+                            newCourseValue.setCreated_date(LocalDate.now());
+                            newCourseValue.setCriteriaComponentCourse(c);
+                            newCourseValue.setParticipant(p);
+                            
+                            if(c.getIndustryCriteria() != null){
+                                Optional<Valuation> industryValue = valuationRepository.findByAspectNameAndEvaluation_ParticipantAndEvaluation_NumEvaluation(c.getIndustryCriteria().getAspectName(), p, c.getIndustryCriteria().getEvaluationForm().getNumEvaluation());
+                                newCourseValue.setValue((float) industryValue.get().getValue());
+                                newCourseValue.setValuation(industryValue.get());
+                                rCriteriaTemp.setValue((float) industryValue.get().getValue());
+                            }else if(c.getSelfAssessmentCriteria() != null){
+                                LocalDate startDate = timeline.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+                                // Menyesuaikan tanggal awal dengan minggu ke-3
+                                LocalDate week = startDate.with(TemporalAdjusters.dayOfWeekInMonth(Integer.parseInt(c.getTypeForm().replaceAll("[^0-9]+", "")), DayOfWeek.MONDAY));
+
+                                Optional<SelfAssessmentGrade> selfAssessmentValue = selfAssessmentGradeRepository.findByStartDate(c.getSelfAssessmentCriteria().getId(), p.getId(), week.toString());
+                                newCourseValue.setValue((float) selfAssessmentValue.get().getValueSelfAssessment());
+                                newCourseValue.setSelfAssessmentValues(selfAssessmentValue.get());
+                                rCriteriaTemp.setValue((float) selfAssessmentValue.get().getValueSelfAssessment());
+                            }else if(c.getSeminarCriteria() != null){
+                                Optional<SeminarValues> seminarValue = seminarValuesRepository.findBySeminarCriteriaAndSeminarForm_ParticipantAndSeminarForm_ExaminerType(c.getSeminarCriteria(), p, Integer.parseInt(c.getTypeForm().replaceAll("[^0-9]+", "")));
+                                newCourseValue.setValue((float) seminarValue.get().getValue());
+                                newCourseValue.setSeminarValues(seminarValue.get());
+                                rCriteriaTemp.setValue((float) seminarValue.get().getValue());
+                            }else if(c.getSupervisorCriteria() != null){
+                                Optional<SupervisorGradeResult> supervisorValue = supervisorGradeResultRepository.findBySupervisorGradeAspectAndSupervisorGrade_ParticipantAndSupervisorGrade_Phase(c.getSupervisorCriteria(), p, Integer.parseInt(c.getTypeForm().substring(c.getTypeForm().lastIndexOf(" ") + 1)));
+                                newCourseValue.setValue((float) supervisorValue.get().getValue());
+                                newCourseValue.setMentorValues(supervisorValue.get());
+                                rCriteriaTemp.setValue((float) supervisorValue.get().getValue());
+                            }
+
+                            courseValuesRepository.save(newCourseValue);
+                        }
+                        
+                        rCriterias.add(rCriteriaTemp);
+                    });
+                    Optional<TotalComponents> totalComponent = totalComponentsRepository.findByComponentCourseAndParticipant(cc, p);
+                    if(totalComponent.isPresent()){
+                        if(cf.getIsFinalization() != 1){
+                            totalComponent.get().setValue(getTotalComponent(cc.getIsAverage(), rCriterias));
+                            totalComponentsRepository.save(totalComponent.get());
+                        }
+                        rComponentTemp.setTotalValueComponent(totalComponent.get().getValue());
+                    }else{
+                        TotalComponents newTotalComponent = new TotalComponents();
+                        newTotalComponent.setComponentCourse(cc);
+                        newTotalComponent.setParticipant(p);
+                        newTotalComponent.setValue(getTotalComponent(cc.getIsAverage(), rCriterias));
+                        totalComponentsRepository.save(newTotalComponent);
+                        rComponentTemp.setTotalValueComponent(newTotalComponent.getValue());
+                    }
+                    
+                    rComponentTemp.setCriteria_data(rCriterias);
+                    rComponents.add(rComponentTemp);
+                });
+                
+                Optional<TotalCourses> totalCourse = totalCoursesRepository.findByCourseFormAndParticipant(cf, p);
+                if(totalCourse.isPresent()){
+                    if(cf.getIsFinalization() != 1){
+                        totalCourse.get().setValue(getTotalCourse(rComponents));
+                        totalCoursesRepository.save(totalCourse.get());
+                    }
+                    rParticipantTemp.setTotal_course(totalCourse.get().getValue());
+                }else{
+                    TotalCourses newTotalCourse = new TotalCourses();
+                    newTotalCourse.setCourseForm(cf);
+                    newTotalCourse.setParticipant(p);
+                    newTotalCourse.setValue(getTotalCourse(rComponents));
+                    totalCoursesRepository.save(newTotalCourse);
+                    rParticipantTemp.setTotal_course(newTotalCourse.getValue());
+                }
+                rParticipants.add(rParticipantTemp);
+            });
+            
+            rCourseTemp.setParticipant_data(rParticipants);
+            rCourse.add(rCourseTemp);
+        });
+        return rCourse;
     }
 
     @Override
@@ -1107,8 +1298,6 @@ public class CourseService implements ICourseService{
 
         evaluations.forEach(e -> {
             EvaluationIndustryDto tempDto = new EvaluationIndustryDto();
-            Optional<Company> company = companyRepository.findById(e.getCompanyId());
-            Optional<Participant> participant = participantRepository.findById(e.getParticipantId());
 
             List<Valuation> valuations = valuationRepository.findByEvaluationId(e.getId());
 
@@ -1118,8 +1307,8 @@ public class CourseService implements ICourseService{
             tempDto.setProdiId(e.getProdiId());
             tempDto.setNumEvaluation(e.getNumEvaluation());
             tempDto.setYear(e.getYear());
-            tempDto.setCompany(company.get());
-            tempDto.setParticipant(participant.get());
+            tempDto.setCompany(e.getCompany());
+            tempDto.setParticipant(e.getParticipant());
             tempDto.setValuations(valuations);
 
             dtos.add(tempDto);

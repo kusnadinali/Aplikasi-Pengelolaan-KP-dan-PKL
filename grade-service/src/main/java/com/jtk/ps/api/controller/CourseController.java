@@ -66,18 +66,21 @@ public class CourseController {
         return ResponseHandler.generateResponse("Deleted Course Form succeed",HttpStatus.OK);
     }
 
-    @GetMapping("/criteria/evaluation-form/{prodiId}")//checked
-    public ResponseEntity<Object> getEvaluationFormByProdiId(@PathVariable("prodiId") Integer prodiId){
+    @GetMapping("/criteria/evaluation-form/")//checked
+    public ResponseEntity<Object> getEvaluationFormByProdiId(HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
         return ResponseHandler.generateResponse("Get Evaluation Forms succeed",HttpStatus.OK, courseService.getEvaluationForm(prodiId));
     }
 
     @GetMapping("/criteria/evaluation-form/aspect") // checked
-    public ResponseEntity<Object> getAspectEvaluationForm(@RequestParam("formType") String formType, @RequestParam("formName") String formName,@RequestParam("prodiId") Integer prodiId){
+    public ResponseEntity<Object> getAspectEvaluationForm(@RequestParam("formType") String formType, @RequestParam("formName") String formName,HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
         return ResponseHandler.generateResponse("Get Aspects Evaluation succeed",HttpStatus.OK, courseService.getCriteriaByEvaluationForm(formType, formName,prodiId));
     }
 
     @GetMapping("/criteria/evaluation-form/aspect/type") // checked
-    public ResponseEntity<Object> getTypeAspectEvaluationForm(@RequestParam("formType") String formType,@RequestParam("prodiId") Integer prodiId){
+    public ResponseEntity<Object> getTypeAspectEvaluationForm(@RequestParam("formType") String formType,HttpServletRequest request){
+        Integer prodiId = (Integer) Objects.requireNonNull(request.getAttribute(Constant.VerifyConstant.ID_PRODI));
         return ResponseHandler.generateResponse("Get Type from Aspects Evaluation succeed",HttpStatus.OK, courseService.getTypeAspectEvaluationForm(formType, prodiId));
     }
 
@@ -106,7 +109,7 @@ public class CourseController {
 
     @GetMapping("/recapitulation") 
     public ResponseEntity<Object> getRecapitulationCourseByYearAndProdi(@RequestParam("year") Integer year, @RequestParam("prodiId") Integer prodiId){
-        return ResponseHandler.generateResponse("Get Recapitulation By Year And ProdiId succeed",HttpStatus.OK, courseService.getAllRecapitulationByYearAndProdiId(year, prodiId));
+        return ResponseHandler.generateResponse("Get Recapitulation By Year And ProdiId succeed",HttpStatus.OK, courseService.getRecapitulationV2(year, prodiId));
     }
 
     @PostMapping("/form/finalization") //checked
@@ -140,13 +143,13 @@ public class CourseController {
             .body(file);
     }
 
-    @GetMapping("/kafka/event") //checked
-    public ResponseEntity<Object> getAllEventStore(){
-        return ResponseHandler.generateResponse("Get All Event succeed",HttpStatus.OK, courseService.getEventStore());
-    }
+    // @GetMapping("/kafka/event") //checked
+    // public ResponseEntity<Object> getAllEventStore(){
+    //     return ResponseHandler.generateResponse("Get All Event succeed",HttpStatus.OK, courseService.getEventStore());
+    // }
 
-    @GetMapping("/kafka/evaluation") //checked
-    public ResponseEntity<Object> getAllEvaluation(){
-        return ResponseHandler.generateResponse("Get All Event succeed",HttpStatus.OK, courseService.getKafkaEvaluationIndustry());
-    }
+    // @GetMapping("/kafka/evaluation") //checked
+    // public ResponseEntity<Object> getAllEvaluation(){
+    //     return ResponseHandler.generateResponse("Get All Event succeed",HttpStatus.OK, courseService.getKafkaEvaluationIndustry());
+    // }
 }

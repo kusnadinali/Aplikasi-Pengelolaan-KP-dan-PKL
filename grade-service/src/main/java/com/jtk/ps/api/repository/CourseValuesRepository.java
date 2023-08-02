@@ -10,9 +10,13 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jtk.ps.api.model.CourseValues;
+import com.jtk.ps.api.model.CriteriaComponentCourse;
+import com.jtk.ps.api.model.Participant;
 
 @Repository
 public interface CourseValuesRepository extends JpaRepository<CourseValues,Integer>{
+
+    Optional<CourseValues> findByCriteriaComponentCourseAndParticipant(CriteriaComponentCourse criteriaComponentCourse, Participant participant);
     
     @Query(value = "select count(*) as total from course_values cv where cv.criteria_id = :criteriaId and year(cv.created_date) = :year",nativeQuery = true)
     Integer isCriteriaInYearNowUse(Integer criteriaId,Integer year);

@@ -23,11 +23,18 @@ public class SeminarForm {
     @Column(name = "date_seminar", nullable = true)
     private Date dateSeminar;
 
-    @Column(name = "participant_id", nullable = false)
-    private Integer participantId;
+    // @Column(name = "participant_id", nullable = false)
+    // private Integer participantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id")
+    private Participant participant;
 
-    @Column(name = "examiner_id")
-    private Integer examinerId;
+    // @Column(name = "examiner_id")
+    // private Integer examinerId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "examiner_id")
+    private Account examiner;
     
     @Column(name = "examiner_type", nullable = true)
     private Integer examinerType;

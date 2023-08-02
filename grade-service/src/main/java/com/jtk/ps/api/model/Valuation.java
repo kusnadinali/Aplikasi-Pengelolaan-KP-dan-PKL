@@ -23,8 +23,11 @@ public class Valuation {
     @Column(name = "value")
     private Integer value;
 
-    @Column(name = "evaluation_id")
-    private Integer evaluationId;
+    // @Column(name = "evaluation_id")
+    // private Integer evaluationId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "evaluation_id")
+    private Evaluation evaluation;
 
     @Column(name = "is_core")
     private Integer isCore;

@@ -22,9 +22,15 @@ public class FinalMapping {
     @Column(name = "prodi_id")
     private Integer prodiId;
 
-    @Column(name = "participant_id")
-    private Integer participantId;
+    // @Column(name = "participant_id")
+    // private Integer participantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id")
+    private Participant participant;
 
-    @Column(name = "company_id")
-    private Integer companyId;
+    // @Column(name = "company_id")
+    // private Integer companyId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 }

@@ -7,10 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.jtk.ps.api.model.ComponentCourse;
 import com.jtk.ps.api.model.CriteriaComponentCourse;
 
 @Repository
 public interface CriteriaComponentCourseRepository extends JpaRepository<CriteriaComponentCourse, Integer>{
+
+    List<CriteriaComponentCourse> findByComponentCourse(ComponentCourse componentCourse);
     
     @Query(value = "select * from criteria_component_course where component_id = :componentId and is_deleted = 0", nativeQuery = true)
     List<CriteriaComponentCourse> findAllByComponentId(Integer componentId);

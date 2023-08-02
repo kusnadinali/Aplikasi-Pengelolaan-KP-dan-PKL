@@ -19,14 +19,24 @@ public class SupervisorMapping {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "company_id_mapping")
-    private Integer companyMappingId;
+    // @Column(name = "company_id_mapping")
+    // private Integer companyMappingId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id_mapping")
+    private Company company;
 
-    @Column(name = "participant_id_mapping")
-    private Integer participantMappingId;
+    // @Column(name = "participant_id_mapping")
+    // private Integer participantMappingId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id_mapping")
+    private Participant participant;
 
-    @Column(name = "supervisor_id_mapping")
-    private Integer supervisorMappingId;
+    // @Column(name = "supervisor_id_mapping")
+    // private Integer supervisorMappingId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supervisor_id_mapping")
+    private Account supervisorMapping;
 
     @Column(name = "prodi_id")
     private Integer prodiId;

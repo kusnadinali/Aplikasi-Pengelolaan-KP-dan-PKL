@@ -57,4 +57,6 @@ public interface ICourseService {
     List<EventStoreDto> getEventStore();
 
     List<EvaluationIndustryDto> getKafkaEvaluationIndustry();
+
+    List<RecapitulationCourseDto> getRecapitulationV2(Integer year, Integer prodiId);
 }

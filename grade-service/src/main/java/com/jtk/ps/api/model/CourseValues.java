@@ -22,23 +22,41 @@ public class CourseValues {
     @Column(name = "value")
     private Float value;
 
-    @Column(name = "criteria_id")
-    private Integer criteriaId;
+    // @Column(name = "criteria_id")
+    // private Integer criteriaId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criteria_id")
+    private CriteriaComponentCourse criteriaComponentCourse;
 
-    @Column(name = "mentor_values_id")
-    private Integer mentorValuesId;
+    // @Column(name = "")
+    // private Integer mentorValuesId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mentor_values_id")
+    private SupervisorGradeResult mentorValues;
 
-    @Column(name = "self_assessment_values_id")
-    private Integer selfAssessmentValuesId;
+    // @Column(name = "")
+    // private Integer selfAssessmentValuesId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "self_assessment_values_id")
+    private SelfAssessmentGrade selfAssessmentValues;
 
-    @Column(name = "seminar_values_id")
-    private Integer seminarValuesId;
+    // @Column(name = "seminar_values_id")
+    // private Integer seminarValuesId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seminar_values_id")
+    private SeminarValues seminarValues;
 
-    @Column(name = "industry_values_id")
-    private Integer industryValuesId;
+    // @Column(name = "industry_values_id")
+    // private Integer industryValuesId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "industry_values_id")
+    private Valuation valuation;
 
-    @Column(name = "participant_id")
-    private Integer participantId;
+    // @Column(name = "participant_id")
+    // private Integer participantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id")
+    private Participant participant;
 
     @Column(name = "created_date")
     private LocalDate created_date;

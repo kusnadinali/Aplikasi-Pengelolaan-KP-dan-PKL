@@ -22,11 +22,17 @@ public class SupervisorGrade {
 
     private Integer phase;
 
-    @Column(name = "participant_id")
-    private Integer participantId;
+    // @Column(name = "participant_id")
+    // private Integer participantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id")
+    private Participant participant;
 
     private Date date;
 
-    @Column(name = "supervisor_id_grade")
-    private Integer supervisorGradeId;
+    // @Column(name = "supervisor_id_grade")
+    // private Integer supervisorGradeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supervisor_id_grade")
+    private SupervisorMapping supervisor;
 }

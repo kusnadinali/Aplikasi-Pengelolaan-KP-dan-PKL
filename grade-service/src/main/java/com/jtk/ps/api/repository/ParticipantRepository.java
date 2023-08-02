@@ -11,6 +11,8 @@ import com.jtk.ps.api.model.Participant;
 
 @Repository
 public interface ParticipantRepository extends JpaRepository<Participant, Integer>{
+
+    List<Participant> findByYearAndProdiId(Integer year, Integer prodiId);
     
     @Query(value = "SELECT *  FROM participant a JOIN final_mapping b on a.id = b.participant_id  join company c on b.company_id = c.id where c.id = :idCompany and b.`year` = :year",nativeQuery = true)
     List<Participant> findParticipantByCompany(@Param("idCompany") Integer idCompany, Integer year);

@@ -1,6 +1,5 @@
 package com.jtk.ps.api.helper;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -32,6 +31,7 @@ import com.jtk.ps.api.model.Account;
 import com.jtk.ps.api.model.AssessmentAspect;
 import com.jtk.ps.api.model.Company;
 import com.jtk.ps.api.model.Evaluation;
+import com.jtk.ps.api.model.EvaluationForm;
 import com.jtk.ps.api.model.EventStore;
 import com.jtk.ps.api.model.FinalMapping;
 import com.jtk.ps.api.model.Participant;
@@ -48,6 +48,7 @@ import com.jtk.ps.api.repository.AccountRepository;
 import com.jtk.ps.api.repository.AssessmentAspectRepository;
 import com.jtk.ps.api.repository.CompanyRepository;
 import com.jtk.ps.api.repository.CriteriaComponentCourseRepository;
+import com.jtk.ps.api.repository.EvaluationFormRepository;
 import com.jtk.ps.api.repository.EvaluationRepository;
 import com.jtk.ps.api.repository.EventStoreRepository;
 import com.jtk.ps.api.repository.FinalMappingRepository;
@@ -138,6 +139,10 @@ public class KafkaConsumer {
     private EventStoreRepository eventStoreRepository;
 
     @Autowired
+    @Lazy
+    private EvaluationFormRepository evaluationFormRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private void eventStoreHandler(String entityId, String eventType, Object object,Integer eventDataId){
@@ -223,7 +228,8 @@ public class KafkaConsumer {
             // proses melakukan save pada tabel account
             if(receivedObject.getOperation().equalsIgnoreCase("ADDED")){
                 Company company = new Company();
-                company.setAccountId(receivedObject.getAccount_id());
+                Optional<Account> account = accountRepository.findById(receivedObject.getAccount_id());
+                company.setAccount(account.get());
                 company.setCompanyEmail(receivedObject.getCompany_email());
                 company.setCompanyName(receivedObject.getCompany_name());
                 company.setSinceYear(receivedObject.getSince_year());
@@ -236,7 +242,8 @@ public class KafkaConsumer {
             else if(receivedObject.getOperation().equalsIgnoreCase("UPDATE")){
                 Optional<Company> company = companyRepository.findById(receivedObject.getId());
                 company.ifPresent(c -> {
-                    c.setAccountId(receivedObject.getAccount_id());
+                    Optional<Account> account = accountRepository.findById(receivedObject.getAccount_id());
+                    c.setAccount(account.get());
                     c.setCompanyEmail(receivedObject.getCompany_email());
                     c.setCompanyName(receivedObject.getCompany_name());
                     c.setSinceYear(receivedObject.getSince_year());
@@ -269,9 +276,11 @@ public class KafkaConsumer {
             if(receivedObject.getOperation().equalsIgnoreCase("ADDED")){
                 Evaluation evaluation = new Evaluation();
                 evaluation.setComment(receivedObject.getComment());
-                evaluation.setCompanyId(receivedObject.getCompany_id());
+                Optional<Company> company = companyRepository.findById(receivedObject.getCompany_id());
+                evaluation.setCompany(company.get());
                 evaluation.setNumEvaluation(receivedObject.getNum_evaluation());
-                evaluation.setParticipantId(receivedObject.getParticipant_id());
+                Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipant_id());
+                evaluation.setParticipant(participant.get());
                 evaluation.setPosition(receivedObject.getPosition());
                 evaluation.setProdiId(receivedObject.getProdi_id());
                 evaluation.setStatus(receivedObject.getStatus());
@@ -285,9 +294,11 @@ public class KafkaConsumer {
                 Optional<Evaluation> evaluation = evaluationRepository.findById(receivedObject.getId());
                 evaluation.ifPresent(c -> {
                     c.setComment(receivedObject.getComment());
-                    c.setCompanyId(receivedObject.getCompany_id());
+                    Optional<Company> company = companyRepository.findById(receivedObject.getCompany_id());
+                    c.setCompany(company.get());
                     c.setNumEvaluation(receivedObject.getNum_evaluation());
-                    c.setParticipantId(receivedObject.getParticipant_id());
+                    Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipant_id());
+                    c.setParticipant(participant.get());
                     c.setPosition(receivedObject.getPosition());
                     c.setProdiId(receivedObject.getProdi_id());
                     c.setStatus(receivedObject.getStatus());
@@ -327,12 +338,13 @@ public class KafkaConsumer {
                 
                 
                 valuation.setAspectName(receivedObject.getAspectName());
-                valuation.setEvaluationId(receivedObject.getEvaluation_id());
+                Optional<Evaluation> evaluation = evaluationRepository.findById(receivedObject.getEvaluation_id());
+                valuation.setEvaluation(evaluation.get());
                 valuation.setIsCore(receivedObject.is_core()?1:0);
                 valuation.setValue(receivedObject.getValue());
 
                 valuationRepository.save(valuation);
-                evaluationRepository.findById(valuation.getEvaluationId()).ifPresent(e ->{
+                evaluationRepository.findById(valuation.getEvaluation().getId()).ifPresent(e ->{
                     e.setUpdateDate(LocalDateTime.now());
                     evaluationRepository.save(e);
                     eventStoreHandler( "evaluation", "EVALUATION_UPDATE", e, e.getId());
@@ -367,7 +379,8 @@ public class KafkaConsumer {
                 AssessmentAspect aspect = new AssessmentAspect();
 
                 aspect.setAspectName(receivedObject.getAspect_name());
-                aspect.setEvaluationFormId(receivedObject.getEvaluation_form_id());
+                Optional<EvaluationForm> evaluationForm = evaluationFormRepository.findById(receivedObject.getEvaluation_form_id());
+                aspect.setEvaluationForm(evaluationForm.get());
                 aspect.setIsDelete(0);
                 aspect.setId(receivedObject.getId());
 
@@ -377,7 +390,8 @@ public class KafkaConsumer {
             }else if(receivedObject.getOperation().equalsIgnoreCase("UPDATE")){
                 assessmentAspectRepository.findById(receivedObject.getId()).ifPresent(c ->{
                     c.setAspectName(receivedObject.getAspect_name());
-                    c.setEvaluationFormId(receivedObject.getEvaluation_form_id());
+                    Optional<EvaluationForm> evaluationForm = evaluationFormRepository.findById(receivedObject.getEvaluation_form_id());
+                    c.setEvaluationForm(evaluationForm.get());
                     assessmentAspectRepository.save(c);
                     eventStoreHandler("assessment_aspect", "ASSESSMENT_ASPECT_UPDATE", c, c.getId());
                 });
@@ -470,8 +484,8 @@ public class KafkaConsumer {
             // proses melakukan save pada tabel account
             if(receivedObject.getOperation().equalsIgnoreCase("ADDED")){
                 Participant participant = new Participant();
-
-                participant.setAccountId(receivedObject.getAccount_id());
+                Optional<Account> account = accountRepository.findById(receivedObject.getAccount_id());
+                participant.setAccount(account.get());
                 participant.setId(receivedObject.getId());
                 participant.setName(receivedObject.getName());
                 participant.setProdiId(receivedObject.getProdi_id());
@@ -506,9 +520,11 @@ public class KafkaConsumer {
             if(receivedObject.getOperation().equalsIgnoreCase("ADDED")){
                 FinalMapping finalMapping = new FinalMapping();
 
-                finalMapping.setCompanyId(receivedObject.getCompany_id());
+                Optional<Company> company = companyRepository.findById(receivedObject.getCompany_id());
+                finalMapping.setCompany(company.get());
                 finalMapping.setId(receivedObject.getId());
-                finalMapping.setParticipantId(receivedObject.getParticipant_id());
+                Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipant_id());
+                finalMapping.setParticipant(participant.get());
                 finalMapping.setProdiId(receivedObject.getProdi_id());
                 finalMapping.setYear(receivedObject.getYear());
 
@@ -548,7 +564,8 @@ public class KafkaConsumer {
 
                 selfAssessment.setFinish_date(receivedObject.getFinish_date());
                 selfAssessment.setId(receivedObject.getId());
-                selfAssessment.setParticipantId(receivedObject.getParticipant_id());
+                Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipant_id());
+                selfAssessment.setParticipant(participant.get());
                 selfAssessment.setStart_date(receivedObject.getStart_date());
 
                 selfAssessmentRepository.save(selfAssessment);
@@ -556,7 +573,8 @@ public class KafkaConsumer {
             }else if(receivedObject.getOperation().equalsIgnoreCase("UPDATE")){
                 selfAssessmentRepository.findById(receivedObject.getId()).ifPresent(sa -> {
                     sa.setFinish_date(receivedObject.getFinish_date());
-                    sa.setParticipantId(receivedObject.getParticipant_id());
+                    Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipant_id());
+                    sa.setParticipant(participant.get());
                     sa.setStart_date(receivedObject.getStart_date());
 
                     selfAssessmentRepository.save(sa);
@@ -588,10 +606,13 @@ public class KafkaConsumer {
             if(receivedObject.getOperation().equalsIgnoreCase("ADDED")){
                 SelfAssessmentGrade grade = new SelfAssessmentGrade();
 
-                grade.setCriteriaSelfAssessmentId(receivedObject.getCriteriaSelfAssessmentId());
+                Optional<SelfAssessmentAspect> selfAssessmentAspect = selfAssessmentAspectRepository.findById(receivedObject.getCriteriaSelfAssessmentId());
+                grade.setSelfAssessmentAspect(selfAssessmentAspect.get());
                 grade.setId(receivedObject.getId());
-                grade.setParticipantId(receivedObject.getParticipantId());
-                grade.setSelfAssessmentId(receivedObject.getSelfAssessmentId());
+                Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipantId());
+                grade.setParticipant(participant.get());
+                Optional<SelfAssessment> selfAssessment = selfAssessmentRepository.findById(receivedObject.getSelfAssessmentId());
+                grade.setSelfAssessment(selfAssessment.get());
                 grade.setValueSelfAssessment(receivedObject.getGradeSelfAssessment());
 
                 selfAssessmentGradeRepository.save(grade);
@@ -599,9 +620,12 @@ public class KafkaConsumer {
             }else if(receivedObject.getOperation().equalsIgnoreCase("UPDATE")){
 
                 selfAssessmentGradeRepository.findById(receivedObject.getId()).ifPresent(sa ->{
-                    sa.setCriteriaSelfAssessmentId(receivedObject.getCriteriaSelfAssessmentId());
-                    sa.setParticipantId(receivedObject.getParticipantId());
-                    sa.setSelfAssessmentId(receivedObject.getSelfAssessmentId());
+                    Optional<SelfAssessmentAspect> selfAssessmentAspect = selfAssessmentAspectRepository.findById(receivedObject.getCriteriaSelfAssessmentId());
+                    sa.setSelfAssessmentAspect(selfAssessmentAspect.get());
+                    Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipantId());
+                    sa.setParticipant(participant.get());
+                    Optional<SelfAssessment> selfAssessment = selfAssessmentRepository.findById(receivedObject.getSelfAssessmentId());
+                    sa.setSelfAssessment(selfAssessment.get());
                     sa.setValueSelfAssessment(receivedObject.getGradeSelfAssessment());
 
                     selfAssessmentGradeRepository.save(sa);
@@ -675,9 +699,11 @@ public class KafkaConsumer {
 
                 supervisor.setDate(receivedObject.getDate());
                 supervisor.setId(receivedObject.getId());
-                supervisor.setParticipantId(receivedObject.getParticipantId());
+                Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipantId());
+                supervisor.setParticipant(participant.get());
                 supervisor.setPhase(receivedObject.getPhase());
-                supervisor.setSupervisorGradeId(receivedObject.getSupervisorGradeId());
+                Optional<SupervisorMapping> supervisorMapping = supervisorMappingRepository.findById(receivedObject.getSupervisorGradeId());
+                supervisor.setSupervisor(supervisorMapping.get());
 
                 supervisorGradeRepository.save(supervisor);
                 eventStoreHandler("supervisor_grade", "SUPERVISOR_GRADE_ADDED", supervisor, supervisor.getId());
@@ -685,9 +711,11 @@ public class KafkaConsumer {
                 supervisorGradeRepository.findById(receivedObject.getId()).ifPresent(sa -> {
                     sa.setDate(receivedObject.getDate());
                     sa.setId(receivedObject.getId());
-                    sa.setParticipantId(receivedObject.getParticipantId());
+                    Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipantId());
+                    sa.setParticipant(participant.get());
                     sa.setPhase(receivedObject.getPhase());
-                    sa.setSupervisorGradeId(receivedObject.getSupervisorGradeId());
+                    Optional<SupervisorMapping> supervisorMapping = supervisorMappingRepository.findById(receivedObject.getSupervisorGradeId());
+                    sa.setSupervisor(supervisorMapping.get());
 
                     supervisorGradeRepository.save(sa);
                     eventStoreHandler("supervisor_grade", "SUPERVISOR_GRADE_UPDATE", sa, sa.getId());
@@ -720,16 +748,20 @@ public class KafkaConsumer {
                 SupervisorGradeResult result = new SupervisorGradeResult();
 
                 result.setId(receivedObject.getId());
-                result.setAspectId(receivedObject.getAspectId());
-                result.setSupervisorGradeId(receivedObject.getSupervisorGradeId());
+                Optional<SupervisorGradeAspect> supervisorGradeAspect = supervisorGradeAspectRepository.findById(receivedObject.getAspectId());
+                result.setSupervisorGradeAspect(supervisorGradeAspect.get());
+                Optional<SupervisorGrade> supervisorGrade = supervisorGradeRepository.findById(receivedObject.getSupervisorGradeId());
+                result.setSupervisorGrade(supervisorGrade.get());
                 result.setValue(receivedObject.getValue());
 
                 supervisorGradeResultRepository.save(result);
                 eventStoreHandler("supervisor_grade_result", "SUPERVISOR_GRADE_RESULT_ADDED", result, result.getId());
             }else if(receivedObject.getOperation().equalsIgnoreCase("UPDATE")){
                 supervisorGradeResultRepository.findById(receivedObject.getId()).ifPresent(r -> {
-                    r.setAspectId(receivedObject.getAspectId());
-                    r.setSupervisorGradeId(receivedObject.getSupervisorGradeId());
+                    Optional<SupervisorGradeAspect> supervisorGradeAspect = supervisorGradeAspectRepository.findById(receivedObject.getAspectId());
+                    r.setSupervisorGradeAspect(supervisorGradeAspect.get());
+                    Optional<SupervisorGrade> supervisorGrade = supervisorGradeRepository.findById(receivedObject.getSupervisorGradeId());
+                    r.setSupervisorGrade(supervisorGrade.get());
                     r.setValue(receivedObject.getValue());
 
                     supervisorGradeResultRepository.save(r);
@@ -802,21 +834,27 @@ public class KafkaConsumer {
                 SupervisorMapping mapping = new SupervisorMapping();
 
                 mapping.setId(receivedObject.getId());
-                mapping.setCompanyMappingId(receivedObject.getCompanyMappingId());
+                Optional<Company> company = companyRepository.findById(receivedObject.getCompanyMappingId());
+                mapping.setCompany(company.get());
                 mapping.setMappingDate(receivedObject.getMappingDate());
-                mapping.setParticipantMappingId(receivedObject.getParticipantMappingId());
+                Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipantMappingId());
+                mapping.setParticipant(participant.get());
                 mapping.setProdiId(receivedObject.getProdiId());
-                mapping.setSupervisorMappingId(receivedObject.getSupervisorMappingId());
+                Optional<Account> account = accountRepository.findById(receivedObject.getSupervisorMappingId());
+                mapping.setSupervisorMapping(account.get());
 
                 supervisorMappingRepository.save(mapping);
                 eventStoreHandler("supervisor_mapping", "SUPERVISOR_MAPPING_ADDED", mapping, mapping.getId());
             }else if(receivedObject.getOperation().equalsIgnoreCase("UPDATE")){
                 supervisorMappingRepository.findById(receivedObject.getId()).ifPresent(m -> {
-                    m.setCompanyMappingId(receivedObject.getCompanyMappingId());
+                    Optional<Company> company = companyRepository.findById(receivedObject.getCompanyMappingId());
+                    m.setCompany(company.get());
                     m.setMappingDate(receivedObject.getMappingDate());
-                    m.setParticipantMappingId(receivedObject.getParticipantMappingId());
+                    Optional<Participant> participant = participantRepository.findById(receivedObject.getParticipantMappingId());
+                    m.setParticipant(participant.get());
                     m.setProdiId(receivedObject.getProdiId());
-                    m.setSupervisorMappingId(receivedObject.getSupervisorMappingId());
+                    Optional<Account> account = accountRepository.findById(receivedObject.getSupervisorMappingId());
+                    m.setSupervisorMapping(account.get());
 
                     supervisorMappingRepository.save(m);
                     eventStoreHandler("supervisor_mapping", "SUPERVISOR_MAPPING_UPDATE", m, m.getId());

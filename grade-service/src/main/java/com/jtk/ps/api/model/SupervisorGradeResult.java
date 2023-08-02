@@ -21,9 +21,15 @@ public class SupervisorGradeResult {
     @Column(name = "grade")
     private Integer value;
 
-    @Column(name = "supervisor_grade_id")
-    private Integer supervisorGradeId;
+    // @Column(name = "supervisor_grade_id")
+    // private Integer supervisorGradeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supervisor_grade_id")
+    private SupervisorGrade supervisorGrade;
 
-    @Column(name = "id_aspect_grade")
-    private Integer aspectId;
+    // @Column(name = "id_aspect_grade")
+    // private Integer aspectId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_aspect_grade")
+    private SupervisorGradeAspect supervisorGradeAspect;
 }

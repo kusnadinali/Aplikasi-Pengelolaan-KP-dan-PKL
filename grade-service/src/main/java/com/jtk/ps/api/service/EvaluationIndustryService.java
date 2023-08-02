@@ -70,9 +70,7 @@ public class EvaluationIndustryService implements IEvaluationIndustryService{
             List<EvaluationDto> tempEvaluation = new ArrayList<>();
             temp1.setId(p.getId());
 
-            accountRepository.findById(p.getAccountId()).ifPresent(a -> {
-                temp1.setNim(a.getUsername());
-            });
+            temp1.setNim(p.getAccount().getUsername());
 
             temp1.setName(p.getName());
 
@@ -80,10 +78,10 @@ public class EvaluationIndustryService implements IEvaluationIndustryService{
             for (Evaluation e : listEvaluations) {
                 EvaluationDto temp = new EvaluationDto();
                 temp.setComment(e.getComment());
-                temp.setCompanyId(e.getCompanyId());
+                temp.setCompanyId(e.getCompany().getId());
                 temp.setId(e.getId());
                 temp.setNumEvaluation(e.getNumEvaluation());
-                temp.setParticipantId(e.getParticipantId());
+                temp.setParticipantId(e.getParticipant().getId());
                 temp.setPosition(e.getPosition());
                 temp.setProdiId(e.getProdiId());
                 temp.setStatus(e.getStatus());
