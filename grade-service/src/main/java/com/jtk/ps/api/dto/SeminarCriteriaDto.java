@@ -20,4 +20,7 @@ public class SeminarCriteriaDto {
 
     @JsonProperty("is_selected")
     private Integer isSelected;
+
+    @JsonProperty("is_deleted")
+    private Integer isDeleted;
 }

@@ -25,6 +25,7 @@ public class WebSecurityConfigurerAdapter extends org.springframework.security.c
                 .antMatchers("/v2/api-docs").permitAll()
                 .antMatchers("/seminar").hasAnyAuthority("COMMITTEE","HEAD_STUDY_PROGRAM")
                 .antMatchers("/courses").hasAnyAuthority("COMMITTEE","HEAD_STUDY_PROGRAM")
+                .antMatchers("/etpro").hasAnyAuthority("COMMITTEE","HEAD_STUDY_PROGRAM")
                 .and()
                 .exceptionHandling().and()
                 .authorizeRequests().anyRequest().authenticated();

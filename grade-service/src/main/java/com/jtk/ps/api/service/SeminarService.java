@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jtk.ps.api.dto.AccountDto;
 import com.jtk.ps.api.dto.CompanyDto;
 import com.jtk.ps.api.dto.ExaminerSeminarDto;
 import com.jtk.ps.api.dto.IsFinalizationDto;
@@ -20,9 +21,11 @@ import com.jtk.ps.api.dto.SeminarCriteriaDto;
 import com.jtk.ps.api.dto.SeminarCriteriaRequestDto;
 import com.jtk.ps.api.dto.SeminarFormDto;
 import com.jtk.ps.api.dto.SeminarFormRequestDto;
+import com.jtk.ps.api.dto.SeminarFormResponse;
 import com.jtk.ps.api.dto.SeminarFormResponseDto;
 import com.jtk.ps.api.dto.SeminarTotalValueDto;
 import com.jtk.ps.api.dto.SeminarValuesDto;
+import com.jtk.ps.api.dto.SeminarValuesResponseDto;
 import com.jtk.ps.api.helper.ExcelHelper;
 import com.jtk.ps.api.model.Account;
 import com.jtk.ps.api.model.Company;
@@ -361,7 +364,39 @@ public class SeminarService implements ISeminarService{
                 
                 // jika menggunakan tahun sekarang
                 seminarValueParticipantDto.setNilaiTotal(sftemp.getTotalValue());
-                seminarValueParticipantDto.setNilai(values);
+
+                List<SeminarValuesResponseDto> valuesDtos = new ArrayList<>();
+                values.forEach(v ->{
+                    SeminarValuesResponseDto valuesDto = new SeminarValuesResponseDto();
+                    valuesDto.setId(v.getId());
+                    valuesDto.setValue(v.getValue());
+                    
+                    SeminarCriteriaDto criteriaDto = new SeminarCriteriaDto();
+                    criteriaDto.setCriteriaBobot(v.getSeminarCriteria().getCriteriaBobot());
+                    criteriaDto.setCriteriaName(v.getSeminarCriteria().getCriteriaName());
+                    criteriaDto.setId(v.getSeminarCriteria().getId());
+                    criteriaDto.setIsDeleted(v.getSeminarCriteria().getIsDeleted());
+                    criteriaDto.setIsSelected(v.getSeminarCriteria().getIsSelected());
+
+                    valuesDto.setSeminarCriteria(criteriaDto);
+
+                    SeminarFormResponse formResponse = new SeminarFormResponse();
+                    formResponse.setComment(v.getSeminarForm().getComment());
+                    formResponse.setDateSeminar(v.getSeminarForm().getDateSeminar());
+                    AccountDto accountDto = new AccountDto();
+                    accountDto.setId(v.getSeminarForm().getExaminer().getId());
+                    accountDto.setUsername(v.getSeminarForm().getExaminer().getUsername());
+                    formResponse.setExaminer(accountDto);
+                    formResponse.setExaminerType(v.getSeminarForm().getExaminerType());
+                    formResponse.setId(v.getSeminarForm().getId());
+                    formResponse.setIsFinalization(v.getSeminarForm().getIsFinalization());
+                    formResponse.setParticipant(participantDto);
+                    formResponse.setTotalValue(v.getSeminarForm().getTotalValue());
+
+                    valuesDto.setSeminarForm(formResponse);
+                    valuesDtos.add(valuesDto);
+                });
+                seminarValueParticipantDto.setNilai(valuesDtos);
                 seminarValueParticipantDto.setPeserta(participantDto);
 
                 penguji.add(seminarValueParticipantDto);
@@ -423,6 +458,8 @@ public class SeminarService implements ISeminarService{
                 nilaiTotal.add(seminarTotalValueDto);
             }
         });
+        System.out.println("=====================================================================");
+        System.out.println(nilaiTotal);
         return nilaiTotal;
     }
 
