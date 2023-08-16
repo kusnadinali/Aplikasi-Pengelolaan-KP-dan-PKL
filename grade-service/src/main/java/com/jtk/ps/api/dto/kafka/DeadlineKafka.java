@@ -1,22 +1,24 @@
 package com.jtk.ps.api.dto.kafka;
 
+import java.sql.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class SupervisorGradeAspectKafka {
+@NoArgsConstructor
+public class DeadlineKafka {
     private Integer id;
 
     private String name;
 
-    private Float gradeWeight;
+    private Integer dayRange;
 
-    private Integer prodiId;
+    private Date startDate;
 
-    private Integer status;
+    private Date finishDate;
 
     private String operation;
 }

@@ -282,7 +282,7 @@ public class KafkaConsumerTest {
     @Test
     void consumeSelfAssessmentGradeTest() throws InterruptedException {
         String topic = "self_assessment_grade_topic";
-        SelfAssessmentGradeKafka eventKafka = new SelfAssessmentGradeKafka(null, 20, 1, 1, 1, "ADDED");
+        SelfAssessmentGradeKafka eventKafka = new SelfAssessmentGradeKafka(null, 20, 1, 1, "ADDED");
 
         String message = null;
         try {
@@ -298,7 +298,7 @@ public class KafkaConsumerTest {
     @Test
     void consumeSelfAssessmentAspectTest() throws InterruptedException {
         String topic = "self_assessment_aspect_topic";
-        SelfAssessmentAspectKafka eventKafka = new SelfAssessmentAspectKafka(null, "event Aspect", "topic", "ADDED");
+        SelfAssessmentAspectKafka eventKafka = new SelfAssessmentAspectKafka(null, "event Aspect", "topic", 6, "ADDED");
 
         String message = null;
         try {
@@ -346,7 +346,7 @@ public class KafkaConsumerTest {
     @Test
     void consumeSupervisorGradeAspectTest() throws InterruptedException {
         String topic = "supervisor_aspect_topic";
-        SupervisorGradeAspectKafka eventKafka = new SupervisorGradeAspectKafka(null, "topic", 0f, "ADDED");
+        SupervisorGradeAspectKafka eventKafka = new SupervisorGradeAspectKafka(null, "topic", 0f, 1, 6, "ADDED");
 
         String message = null;
         try {

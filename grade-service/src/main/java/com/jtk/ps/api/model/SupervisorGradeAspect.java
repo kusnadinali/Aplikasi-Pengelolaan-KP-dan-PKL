@@ -18,9 +18,15 @@ public class SupervisorGradeAspect {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "description", nullable = false)
-    private String description;
+    @Column(name = "name", nullable = false)
+    private String name;
 
     @Column(name = "grade_weight")
     private Float gradeWeight;
+
+    @Column(name = "prodi_id")
+    private Integer prodiId;
+
+    @Column(name = "status")
+    private Integer status;
 }

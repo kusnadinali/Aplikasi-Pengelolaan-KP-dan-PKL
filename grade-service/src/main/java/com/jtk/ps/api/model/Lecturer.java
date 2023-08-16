@@ -1,8 +1,6 @@
 package com.jtk.ps.api.model;
 
 
-import java.util.Date;
-
 import javax.persistence.*;
 
 import lombok.AllArgsConstructor;
@@ -10,25 +8,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "self_assessment")
+@Table(name = "lecturer")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SelfAssessment {
+public class Lecturer {
     @Id
     @Column(unique = true, nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "start_date")
-    private Date startDate;
+    @Column(name = "name")
+    private String name;
 
-    @Column(name = "finish_date")
-    private Date finishDate;
+    @Column(name = "prodi_id")
+    private Integer prodiId;
 
-    // @Column(name = "participant_id")
-    // private Integer participantId;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "participant_id")
-    private Participant participant;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 }

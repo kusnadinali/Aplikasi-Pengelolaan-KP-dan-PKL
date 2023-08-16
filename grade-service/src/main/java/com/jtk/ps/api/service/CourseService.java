@@ -1,6 +1,7 @@
 package com.jtk.ps.api.service;
 
 import java.io.ByteArrayInputStream;
+import java.sql.Date;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,17 +43,18 @@ import com.jtk.ps.api.model.ComponentCourse;
 import com.jtk.ps.api.model.CourseForm;
 import com.jtk.ps.api.model.CourseValues;
 import com.jtk.ps.api.model.CriteriaComponentCourse;
+import com.jtk.ps.api.model.Deadline;
 import com.jtk.ps.api.model.Evaluation;
 import com.jtk.ps.api.model.EvaluationForm;
 import com.jtk.ps.api.model.EventStore;
 import com.jtk.ps.api.model.Participant;
+import com.jtk.ps.api.model.SelfAssessment;
 import com.jtk.ps.api.model.SelfAssessmentAspect;
 import com.jtk.ps.api.model.SelfAssessmentGrade;
 import com.jtk.ps.api.model.SeminarCriteria;
 import com.jtk.ps.api.model.SeminarValues;
 import com.jtk.ps.api.model.SupervisorGradeAspect;
 import com.jtk.ps.api.model.SupervisorGradeResult;
-import com.jtk.ps.api.model.Timeline;
 import com.jtk.ps.api.model.TotalComponents;
 import com.jtk.ps.api.model.TotalCourses;
 import com.jtk.ps.api.model.Valuation;
@@ -63,12 +65,14 @@ import com.jtk.ps.api.repository.ComponentCourseRepository;
 import com.jtk.ps.api.repository.CourseFormRepository;
 import com.jtk.ps.api.repository.CourseValuesRepository;
 import com.jtk.ps.api.repository.CriteriaComponentCourseRepository;
+import com.jtk.ps.api.repository.DeadlineRepository;
 import com.jtk.ps.api.repository.EvaluationFormRepository;
 import com.jtk.ps.api.repository.EvaluationRepository;
 import com.jtk.ps.api.repository.EventStoreRepository;
 import com.jtk.ps.api.repository.ParticipantRepository;
 import com.jtk.ps.api.repository.SelfAssessmentAspectRepository;
 import com.jtk.ps.api.repository.SelfAssessmentGradeRepository;
+import com.jtk.ps.api.repository.SelfAssessmentRepository;
 import com.jtk.ps.api.repository.SeminarCriteriaRepository;
 import com.jtk.ps.api.repository.SeminarValuesRepository;
 import com.jtk.ps.api.repository.SupervisorGradeAspectRepository;
@@ -142,6 +146,10 @@ public class CourseService implements ICourseService{
 
     @Autowired
     @Lazy
+    private SelfAssessmentRepository selfAssessmentRepository;
+
+    @Autowired
+    @Lazy
     private SupervisorGradeResultRepository supervisorGradeResultRepository;
 
     @Autowired
@@ -155,6 +163,10 @@ public class CourseService implements ICourseService{
     @Autowired
     @Lazy
     private TimelineRepository timelineRepository;
+
+    @Autowired
+    @Lazy
+    private DeadlineRepository deadlineRepository;
 
     @Autowired
     @Lazy
@@ -339,19 +351,19 @@ public class CourseService implements ICourseService{
         criteriaEvaluationForms.add( new CriteriaEvaluationFormDto(0,"Semua aspek"));
         switch (decision) {
             case "Pembimbing":
-                List<SupervisorGradeAspect> pembimbingAspects = supervisorGradeAspectRepository.findAll();
+                List<SupervisorGradeAspect> pembimbingAspects = supervisorGradeAspectRepository.findByStatus(6);
 
                 pembimbingAspects.forEach(p -> {
                     CriteriaEvaluationFormDto temp = new CriteriaEvaluationFormDto();
 
                     temp.setId(p.getId());
-                    temp.setName(p.getDescription());
+                    temp.setName(p.getName());
 
                     criteriaEvaluationForms.add(temp);
                 });
                 break;
             case "Self Assessment":
-                List<SelfAssessmentAspect> selfAssessmentAspects = selfAssessmentAspectRepository.findAll();
+                List<SelfAssessmentAspect> selfAssessmentAspects = selfAssessmentAspectRepository.findByStatus(6);
 
                 selfAssessmentAspects.forEach(s -> {
                     CriteriaEvaluationFormDto temp = new CriteriaEvaluationFormDto();
@@ -979,36 +991,32 @@ public class CourseService implements ICourseService{
                     }
                     break;
                 case "Self Assessment":
-                    value = selfAssessmentGradeRepository.findValuesByCriteriaIdAndParticipantId(criteria.getSelfAssessmentCriteria().getId(), pId);
-                    String prodiName = "";
-                    if(prodiId == 0){
-                        prodiName = "KP";
-                    }else{
-                        prodiName = "PKL";
-                    }
+                    // value = selfAssessmentGradeRepository.findValuesByCriteriaIdAndParticipantId(criteria.getSelfAssessmentCriteria().getId(), pId);
+                    // Optional<SelfAssessmentGrade> gradeSS = selfAssessmentGradeRepository.findBySelfAssessmentAspectAndSelfAssessment(criteria.getSelfAssessmentCriteria(), null)
+                    Optional<Deadline> deadline = deadlineRepository.findByName("Self Assessment");
                     
-                    Optional<Timeline> timeline = timelineRepository.findByName("Pelaksanaan "+prodiName);
+                    if(deadline.isPresent()){
+                        LocalDate startDate = deadline.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-                    if(timeline.isPresent()){
-                        LocalDate startDate = timeline.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-                        // Menyesuaikan tanggal awal dengan minggu ke-3
                         LocalDate week = startDate.with(TemporalAdjusters.dayOfWeekInMonth(Integer.parseInt(criteria.getTypeForm().replaceAll("[^0-9]+", "")), DayOfWeek.MONDAY));
 
-                        Optional<SelfAssessmentGrade> selfAssessmentGrade = selfAssessmentGradeRepository.findByStartDate(criteria.getSelfAssessmentCriteria().getId(), pId, week.toString());
-                        
-                        if(selfAssessmentGrade.isPresent()){
+                        Optional<Participant> participantOptional = participantRepository.findById(pId);
+                        Optional<SelfAssessment> SS = selfAssessmentRepository.findByStartDateAndParticipant(Date.valueOf(week.toString()), participantOptional.get());
+
+                        Optional<SelfAssessmentGrade> gradeSS = selfAssessmentGradeRepository.findBySelfAssessmentAspectAndSelfAssessment(criteria.getSelfAssessmentCriteria(), SS.get());
+
+                        if(gradeSS.isPresent()){
                             newValues.setCreated_date(LocalDate.now());
                             Optional<CriteriaComponentCourse> cccOptional = criteriaComponentCourseRepository.findById(criteria.getId());
                             newValues.setCriteriaComponentCourse(cccOptional.get());
-                            newValues.setSelfAssessmentValues(selfAssessmentGrade.get());
-                            newValues.setValue((float) selfAssessmentGrade.get().getValueSelfAssessment());
+                            newValues.setSelfAssessmentValues(gradeSS.get());
+                            newValues.setValue((float) gradeSS.get().getValueSelfAssessment());
                             Optional<Participant> pOptional = participantRepository.findById(pId);
                             newValues.setParticipant(pOptional.get());
 
                             courseValuesRepository.save(newValues);
 
-                            value = (float) selfAssessmentGrade.get().getValueSelfAssessment();
+                            value = (float) gradeSS.get().getValueSelfAssessment();
                         }else{
                             value = (float) 0;
                         }
@@ -1033,7 +1041,7 @@ public class CourseService implements ICourseService{
                 break;
             case "Pembimbing":
                 Optional<SupervisorGradeAspect> supervisorGradeAspectOptional = supervisorGradeAspectRepository.findById(idPembimbing);
-                aspectName = supervisorGradeAspectOptional.map(SupervisorGradeAspect::getDescription).orElse("");
+                aspectName = supervisorGradeAspectOptional.map(SupervisorGradeAspect::getName).orElse("");
                 break;
             case "Self Assessment":
                 Optional<SelfAssessmentAspect> selfAssessmentAspectOptional = selfAssessmentAspectRepository.findById(idSelfAssessment);
@@ -1053,14 +1061,8 @@ public class CourseService implements ICourseService{
         List<RecapitulationCourseDto> rCourse = new ArrayList<>();
         List<CourseForm> courseForms = courseFormRepository.findByTahunAjaranStartAndProdiId(year, prodiId);
         List<Participant> participants = participantRepository.findByYearAndProdiId(year, prodiId);
-        String prodiName = "";
-        if(prodiId == 0){
-            prodiName = "KP";
-        }else{
-            prodiName = "PKL";
-        }
         
-        Optional<Timeline> timeline = timelineRepository.findByName("Pelaksanaan "+prodiName);
+        Optional<Deadline> deadlineSS = deadlineRepository.findByName("Self Assessment");
 
         courseForms.forEach(cf -> {
             RecapitulationCourseDto rCourseTemp = new RecapitulationCourseDto();
@@ -1100,7 +1102,7 @@ public class CourseService implements ICourseService{
                         }else if(c.getSeminarCriteria() != null){
                             nameAspect = c.getSeminarCriteria().getCriteriaName();
                         }else if(c.getSupervisorCriteria() != null){
-                            nameAspect = c.getSupervisorCriteria().getDescription();
+                            nameAspect = c.getSupervisorCriteria().getName();
                         }
                         rCriteriaTemp.setBobot(c.getBobotCriteria());
                         rCriteriaTemp.setFormType(c.getTypeForm());
@@ -1117,12 +1119,14 @@ public class CourseService implements ICourseService{
                                     courseValue.get().setValue((float) industryValue.get().getValue());
                                     rCriteriaTemp.setValue((float) industryValue.get().getValue());
                                 }else if(c.getSelfAssessmentCriteria() != null){
-                                    LocalDate startDate = timeline.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                                    LocalDate startDate = deadlineSS.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
                                     // Menyesuaikan tanggal awal dengan minggu ke-3
                                     LocalDate week = startDate.with(TemporalAdjusters.dayOfWeekInMonth(Integer.parseInt(c.getTypeForm().replaceAll("[^0-9]+", "")), DayOfWeek.MONDAY));
 
-                                    Optional<SelfAssessmentGrade> selfAssessmentValue = selfAssessmentGradeRepository.findByStartDate(c.getSelfAssessmentCriteria().getId(), p.getId(), week.toString());
+                                    Optional<SelfAssessment> SS = selfAssessmentRepository.findByStartDateAndParticipant(Date.valueOf(week.toString()), p);
+                                    Optional<SelfAssessmentGrade> selfAssessmentValue = selfAssessmentGradeRepository.findBySelfAssessmentAspectAndSelfAssessment(c.getSelfAssessmentCriteria(), SS.get());
+
                                     courseValue.get().setValue((float) selfAssessmentValue.get().getValueSelfAssessment());
                                     rCriteriaTemp.setValue((float) selfAssessmentValue.get().getValueSelfAssessment());
                                 }else if(c.getSeminarCriteria() != null){
@@ -1153,12 +1157,13 @@ public class CourseService implements ICourseService{
                                 newCourseValue.setValuation(industryValue.get());
                                 rCriteriaTemp.setValue((float) industryValue.get().getValue());
                             }else if(c.getSelfAssessmentCriteria() != null){
-                                LocalDate startDate = timeline.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                                LocalDate startDate = deadlineSS.get().getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
                                 // Menyesuaikan tanggal awal dengan minggu ke-3
                                 LocalDate week = startDate.with(TemporalAdjusters.dayOfWeekInMonth(Integer.parseInt(c.getTypeForm().replaceAll("[^0-9]+", "")), DayOfWeek.MONDAY));
 
-                                Optional<SelfAssessmentGrade> selfAssessmentValue = selfAssessmentGradeRepository.findByStartDate(c.getSelfAssessmentCriteria().getId(), p.getId(), week.toString());
+                                Optional<SelfAssessment> SS = selfAssessmentRepository.findByStartDateAndParticipant(Date.valueOf(week.toString()), p);
+                                Optional<SelfAssessmentGrade> selfAssessmentValue = selfAssessmentGradeRepository.findBySelfAssessmentAspectAndSelfAssessment(c.getSelfAssessmentCriteria(), SS.get());
                                 newCourseValue.setValue((float) selfAssessmentValue.get().getValueSelfAssessment());
                                 newCourseValue.setSelfAssessmentValues(selfAssessmentValue.get());
                                 rCriteriaTemp.setValue((float) selfAssessmentValue.get().getValueSelfAssessment());

@@ -17,7 +17,7 @@ public class SupervisorMappingKafka {
 
     private Integer participantMappingId;
 
-    private Integer supervisorMappingId;
+    private Integer lecturerId;
 
     private Integer prodiId;
 

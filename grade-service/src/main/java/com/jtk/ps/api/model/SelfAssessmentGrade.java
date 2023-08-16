@@ -33,10 +33,4 @@ public class SelfAssessmentGrade {
     @JoinColumn(name = "criteria_self_assessment_id")
     private SelfAssessmentAspect selfAssessmentAspect;
 
-    // @Column(name = "participant_id")
-    // private Integer participantId;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "participant_id")
-    private Participant participant;
-
 }

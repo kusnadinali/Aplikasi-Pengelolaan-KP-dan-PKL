@@ -14,5 +14,7 @@ public class SelfAssessmentAspectKafka {
 
     private String description;
 
+    private Integer status;
+
     private String operation;
 }

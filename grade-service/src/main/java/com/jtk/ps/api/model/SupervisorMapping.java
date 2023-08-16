@@ -22,21 +22,21 @@ public class SupervisorMapping {
     // @Column(name = "company_id_mapping")
     // private Integer companyMappingId;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id_mapping")
+    @JoinColumn(name = "company_id")
     private Company company;
 
     // @Column(name = "participant_id_mapping")
     // private Integer participantMappingId;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "participant_id_mapping")
+    @JoinColumn(name = "participant_id")
     private Participant participant;
 
     // @Column(name = "supervisor_id_mapping")
     // private Integer supervisorMappingId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supervisor_id_mapping")
-    private Account supervisorMapping;
+    @JoinColumn(name = "lecturer_id")
+    private Lecturer lecturer;
 
     @Column(name = "prodi_id")
     private Integer prodiId;

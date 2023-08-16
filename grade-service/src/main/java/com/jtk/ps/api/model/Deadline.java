@@ -1,7 +1,6 @@
 package com.jtk.ps.api.model;
 
-
-import java.util.Date;
+import java.sql.Date;
 
 import javax.persistence.*;
 
@@ -10,25 +9,25 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "self_assessment")
+@Table(name = "deadline")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class SelfAssessment {
+@AllArgsConstructor
+public class Deadline {
     @Id
     @Column(unique = true, nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "start_date")
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "dayRange")
+    private Integer dayRange;
+
+    @Column(name = "start_assignment_date")
     private Date startDate;
 
-    @Column(name = "finish_date")
+    @Column(name = "finish_assignment_date")
     private Date finishDate;
-
-    // @Column(name = "participant_id")
-    // private Integer participantId;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "participant_id")
-    private Participant participant;
 }

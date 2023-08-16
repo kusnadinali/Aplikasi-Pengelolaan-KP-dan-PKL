@@ -23,4 +23,7 @@ public class SelfAssessmentAspect {
 
     @Column(name = "description")
     private String description;
+
+    @Column(name = "status")
+    private Integer status;
 }

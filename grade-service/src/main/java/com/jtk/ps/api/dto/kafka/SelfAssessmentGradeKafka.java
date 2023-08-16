@@ -16,8 +16,5 @@ public class SelfAssessmentGradeKafka {
 
     private Integer criteriaSelfAssessmentId;
 
-
-    private Integer participantId;
-
     private String operation;
 }
