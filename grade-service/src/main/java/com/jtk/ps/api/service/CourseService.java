@@ -1135,7 +1135,8 @@ public class CourseService implements ICourseService{
                                     rCriteriaTemp.setValue((float) seminarValue.get().getValue());
                                 }else if(c.getSupervisorCriteria() != null){
                                     Optional<SupervisorGradeResult> supervisorValue = supervisorGradeResultRepository.findBySupervisorGradeAspectAndSupervisorGrade_ParticipantAndSupervisorGrade_Phase(c.getSupervisorCriteria(), p, Integer.parseInt(c.getTypeForm().substring(c.getTypeForm().lastIndexOf(" ") + 1)));
-                                    courseValue.get().setValue((float) supervisorValue.get().getValue());
+                                    float cv = (float)(supervisorValue.get().getValue()*100)/c.getSupervisorCriteria().getGradeWeight();
+                                    courseValue.get().setValue(cv);
                                     rCriteriaTemp.setValue((float) supervisorValue.get().getValue());
                                 }
                                 courseValuesRepository.save(courseValue.get());

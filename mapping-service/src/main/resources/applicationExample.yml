@@ -1,11 +1,11 @@
 spring:
   application:
-    name: account-service
+    name: mapping-service
 
 server:
-  port: 8081
+  port: 8085
   servlet:
-    context-path: /account
+    context-path: /mapping
 
 eureka:
   client:
@@ -17,4 +17,4 @@ eureka:
     # Necessary for Docker as it doesn't have DNS entries
     prefer-ip-address: true
     # Necessary for Docker otherwise you will get 172.0.0.x IP
-    ip-address: 192.168.229.141
+    ip-address: 192.168.229.145

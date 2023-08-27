@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "MonitoringServiceApplication",
+            "request": "launch",
+            "mainClass": "com.jtk.ps.api.MonitoringServiceApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-ServiceRegistryApplication<service-registry>",
             "request": "launch",
             "cwd": "${workspaceFolder}",
@@ -52,7 +59,8 @@
             "mainClass": "com.jtk.ps.api.ParticipantServiceApplication",
             "projectName": "participant-service",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=53258 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=participant-service"
         },
         {
             "type": "java",
@@ -62,7 +70,8 @@
             "mainClass": "com.jtk.ps.api.CompanyServiceApplication",
             "projectName": "company-service",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=53870 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=company-service"
         },
         {
             "type": "java",
@@ -72,7 +81,8 @@
             "mainClass": "com.jtk.ps.api.ManagementContentServiceApplication",
             "projectName": "management-content-service",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=53889 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=management-content-service"
         },
         {
             "type": "java",
@@ -81,6 +91,16 @@
             "cwd": "${workspaceFolder}",
             "mainClass": "com.jtk.ps.api.MappingServiceApplication",
             "projectName": "mapping-service",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-MonitoringServiceApplication<monitoring-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.jtk.ps.api.MonitoringServiceApplication",
+            "projectName": "monitoring-service",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }

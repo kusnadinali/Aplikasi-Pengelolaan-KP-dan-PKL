@@ -5,18 +5,21 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class SupervisorGradeAspectKafka {
+@NoArgsConstructor
+public class CompanyKafka {
     private Integer id;
 
-    private String name;
+    private String company_name;
 
-    private Integer maxGrade;
+    private String company_email;
 
-    private Integer prodiId;
+    private Integer since_year;
 
-    private Integer status;
+    private boolean status;
+
+    private Integer account_id;
 
     private String operation;
+
 }

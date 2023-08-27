@@ -1,22 +1,20 @@
 package com.jtk.ps.api.dto.kafka;
 
-import java.sql.Date;
-
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-public class SelfAssessmentKafka {
+public class FinalMappingKafka {
     private Integer id;
 
-    private Date start_date;
+    private Integer year;
 
-    private Date finish_date;
+    private Integer prodi_id;
 
     private Integer participant_id;
+
+    private Integer company_id;
 
     private String operation;
 }

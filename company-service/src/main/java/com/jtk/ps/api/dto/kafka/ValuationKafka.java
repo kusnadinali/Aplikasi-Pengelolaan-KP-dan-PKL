@@ -7,16 +7,17 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SupervisorGradeAspectKafka {
+public class ValuationKafka {
+    
     private Integer id;
 
-    private String name;
+    private String aspectName;
 
-    private Integer maxGrade;
+    private Integer value;
 
-    private Integer prodiId;
+    private Integer evaluation_id;
 
-    private Integer status;
+    private boolean is_core;
 
     private String operation;
 }

@@ -1,22 +1,23 @@
 package com.jtk.ps.api.dto.kafka;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-public class SupervisorGradeAspectKafka {
+public class ParticipantKafka {
+    
     private Integer id;
 
     private String name;
 
-    private Integer maxGrade;
+    private Integer year;
 
-    private Integer prodiId;
+    private boolean status_cv;
 
-    private Integer status;
+    private Integer prodi_id;
+
+    private Integer account_id;
 
     private String operation;
 }

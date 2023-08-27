@@ -1,6 +1,10 @@
 package com.jtk.ps.api.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jtk.ps.api.dto.*;
+import com.jtk.ps.api.dto.kafka.AssessmentAspectKafka;
+import com.jtk.ps.api.dto.kafka.TimelineKafka;
 import com.jtk.ps.api.model.*;
 import com.jtk.ps.api.repository.*;
 import com.jtk.ps.api.util.Constant;
@@ -16,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -60,6 +65,52 @@ public class ManagementContentService implements IManagementContentService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    @Lazy
+    private KafkaTemplate<String, String> kafkaAccountTemplate;
+
+    private void sendAssessmentAspectKafka(AssessmentAspect aspect, String operation){
+        AssessmentAspectKafka objectKafka = new AssessmentAspectKafka();
+
+            objectKafka.setAspect_name(aspect.getAspectName());
+            objectKafka.setEvaluation_form_id(aspect.getEvaluationForm().getId());
+            objectKafka.setId(aspect.getId());
+            objectKafka.setOperation(operation);
+        
+        try {
+            // Mengubah objek menjadi string JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String pesanJson = objectMapper.writeValueAsString(objectKafka);
+
+            kafkaAccountTemplate.send("assessment_aspect_topic", pesanJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendTimelineKafka(TimelineSetting timelineSetting, String operation){
+        TimelineKafka objectKafka = new TimelineKafka();
+
+            objectKafka.setDescription(timelineSetting.getDescription());
+            objectKafka.setEnd_date(timelineSetting.getEndDate());
+            objectKafka.setId(timelineSetting.getId());
+            objectKafka.setName(timelineSetting.getName());
+            objectKafka.setProdi_id(timelineSetting.getProdiId());
+            objectKafka.setStart_date(timelineSetting.getStartDate());
+
+            objectKafka.setOperation(operation);
+        
+        try {
+            // Mengubah objek menjadi string JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String pesanJson = objectMapper.writeValueAsString(objectKafka);
+
+            kafkaAccountTemplate.send("timeline_topic", pesanJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public TimelineSetting createTimeline(TimelineRequest timelineRequest, Integer prodi) {
@@ -69,7 +120,9 @@ public class ManagementContentService implements IManagementContentService {
         timelineSetting.setStartDate(timelineRequest.getDateStart());
         timelineSetting.setEndDate(timelineRequest.getDateEnd());
         timelineSetting.setDescription(timelineRequest.getDescription());
-        return timelineSettingRepository.save(timelineSetting);
+        timelineSetting = timelineSettingRepository.save(timelineSetting);
+        sendTimelineKafka(timelineSetting, "ADDED");
+        return timelineSetting;
     }
 
     @Override
@@ -104,13 +157,16 @@ public class ManagementContentService implements IManagementContentService {
             value.setDescription(timelineRequest.getDescription());
             value.setProdiId(prodi);
             timelineSettingRepository.save(value);
+            sendTimelineKafka(value, "UPDATE");
         });
     }
 
     @Override
     public void deleteTimeline(Integer id) {
         formSettingRepository.updateTimelineSettingToNull(id);
+        Optional<TimelineSetting> timeline = timelineSettingRepository.findById(id);
         timelineSettingRepository.deleteById(id);
+        sendTimelineKafka(timeline.get(), "DELETE");
     }
 
     @Override
@@ -346,6 +402,7 @@ public class ManagementContentService implements IManagementContentService {
         evaluationFormRepository.findById(assessmentAspectRequest.getEvaluationFormId()).ifPresent(ef -> {
            aa.setEvaluationForm(ef);
            assessmentAspectRepository.save(aa);
+           sendAssessmentAspectKafka(aa, "ADDED");
         });
     }
 
@@ -354,12 +411,15 @@ public class ManagementContentService implements IManagementContentService {
         assessmentAspectRepository.findById(id).ifPresent(aa -> {
             aa.setAspectName(assessmentAspectRequest.getAspectName());
             assessmentAspectRepository.save(aa);
+            sendAssessmentAspectKafka(aa, "UPDATE");
         });
     }
 
     @Override
     public void deleteAssessmentAspect(Integer id) {
+        Optional<AssessmentAspect> aa = assessmentAspectRepository.findById(id);
         assessmentAspectRepository.deleteById(id);
+        sendAssessmentAspectKafka(aa.get(), "DELETE");
     }
 
     public List<FeedbackQuestion> getAllFeedbackQuestion(Integer idProdi) {

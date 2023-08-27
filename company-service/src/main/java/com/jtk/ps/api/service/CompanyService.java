@@ -2,7 +2,14 @@ package com.jtk.ps.api.service;
 
 import be.quodlibet.boxable.*;
 import be.quodlibet.boxable.line.LineStyle;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jtk.ps.api.dto.*;
+import com.jtk.ps.api.dto.kafka.CompanyKafka;
+import com.jtk.ps.api.dto.kafka.EvaluationKafka;
+import com.jtk.ps.api.dto.kafka.PrerequisiteKafka;
+import com.jtk.ps.api.dto.kafka.ValuationKafka;
 import com.jtk.ps.api.model.Company;
 import com.jtk.ps.api.model.Criteria;
 import com.jtk.ps.api.model.Prerequisite;
@@ -37,6 +44,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -116,6 +124,97 @@ public class CompanyService implements ICompanyService {
     @Autowired
     @Lazy
     private RestTemplate restTemplate;
+
+    @Autowired
+    @Lazy
+    private KafkaTemplate<String, String> kafkaAccountTemplate;
+
+    private void sendCompanyKafka(Company company, String operation){
+        CompanyKafka companyKafka = new CompanyKafka();
+
+        companyKafka.setAccount_id(company.getAccountId());
+        companyKafka.setCompany_email(company.getCompanyEmail());
+        companyKafka.setCompany_name(company.getCompanyName());
+        companyKafka.setId(company.getId());
+        companyKafka.setSince_year(company.getSinceYear());
+        companyKafka.setStatus(company.getStatus());
+        companyKafka.setOperation(operation);
+        
+        try {
+            // Mengubah objek menjadi string JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String pesanJson = objectMapper.writeValueAsString(companyKafka);
+
+            kafkaAccountTemplate.send("company_topic", pesanJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendEvaluationKafka(Evaluation evaluation, String operation){
+        EvaluationKafka objectKafka = new EvaluationKafka();
+
+            objectKafka.setCompany_id(evaluation.getIdCompany());
+            objectKafka.setParticipant_id(evaluation.getIdParticipant());
+            objectKafka.setProdi_id(evaluation.getIdProdi());
+            objectKafka.setPosition(evaluation.getPosition());
+            objectKafka.setComment(evaluation.getComment());
+            objectKafka.setId(evaluation.getId());
+            objectKafka.setNum_evaluation(evaluation.getNumEvaluation());
+            objectKafka.setStatus(evaluation.getStatus());
+            objectKafka.setYear(evaluation.getYear());
+            objectKafka.setOperation(operation);
+        
+        try {
+            // Mengubah objek menjadi string JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String pesanJson = objectMapper.writeValueAsString(objectKafka);
+
+            kafkaAccountTemplate.send("evaluation_topic", pesanJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendValuationKafka(Valuation valuation, String operation){
+        ValuationKafka objectKafka = new ValuationKafka();
+
+            objectKafka.setAspectName(valuation.getAspectName());
+            objectKafka.setValue(valuation.getValue());
+            objectKafka.set_core(valuation.getIsCore());
+            objectKafka.setOperation(operation);
+            objectKafka.setId(valuation.getId());
+            objectKafka.setEvaluation_id(valuation.getEvaluation().getId());
+        
+        try {
+            // Mengubah objek menjadi string JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String pesanJson = objectMapper.writeValueAsString(objectKafka);
+
+            kafkaAccountTemplate.send("valuation_topic", pesanJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendPrerequisiteKafka(Prerequisite prerequisite, String operation){
+        PrerequisiteKafka objectKafka = new PrerequisiteKafka();
+
+            objectKafka.setCompany_id(prerequisite.getCompany().getId());
+            objectKafka.setId(prerequisite.getId());
+            objectKafka.setOperation(operation);
+            objectKafka.setYear(prerequisite.getYear());
+        
+        try {
+            // Mengubah objek menjadi string JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String pesanJson = objectMapper.writeValueAsString(objectKafka);
+
+            kafkaAccountTemplate.send("prerequisite_topic", pesanJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     @Override
@@ -262,14 +361,15 @@ public class CompanyService implements ICompanyService {
         }
 
         newCompany = companyRepository.saveAndFlush(newCompany);
+        sendCompanyKafka(newCompany,"ADDED");
 
         Prerequisite prerequisite = new Prerequisite();
         prerequisite.setRegionId(0);
         prerequisite.setYear(Calendar.getInstance().get(Calendar.YEAR));
         prerequisite.setStatus(Boolean.FALSE);
         prerequisite.setCompany(newCompany);
-        prerequisiteRepository.save(prerequisite);
-
+        prerequisite = prerequisiteRepository.save(prerequisite);
+        sendPrerequisiteKafka(prerequisite, "ADDED");
 
         return newCompany;
     }
@@ -297,6 +397,7 @@ public class CompanyService implements ICompanyService {
             c.setSinceYear(company.getSinceYear());
 
             companyRepository.save(c);
+            sendCompanyKafka(c,"UPDATE");
         });
 
     }
@@ -450,6 +551,7 @@ public class CompanyService implements ICompanyService {
 
 
             prerequisiteRepository.save(prerequisiteUpdate);
+            sendPrerequisiteKafka(prerequisiteUpdate, "UPDATE");
             isUpdate = true;
         }
 
@@ -536,6 +638,7 @@ public class CompanyService implements ICompanyService {
             }
 
             prerequisiteRepository.save(p);
+            sendPrerequisiteKafka(p, "UPDATE");
 
             isSuccess.set(Boolean.TRUE);
         });
@@ -555,6 +658,7 @@ public class CompanyService implements ICompanyService {
             }
 
             prerequisiteRepository.save(p);
+            sendPrerequisiteKafka(p, "UPDATE");
             isSuccess.set(Boolean.TRUE);
         });
         return isSuccess.get();
@@ -574,6 +678,7 @@ public class CompanyService implements ICompanyService {
             }
 
             prerequisiteRepository.save(prerequisiteUpdate);
+            sendPrerequisiteKafka(prerequisiteUpdate, "UPDATE");
             isUpdate = true;
         }
 
@@ -1221,27 +1326,31 @@ public class CompanyService implements ICompanyService {
 
             if (cer.getIdProdi() == EProdi.D3.id) {
                 e.setNumEvaluation(1);
-                evaluationRepository.save(e);
+                e = evaluationRepository.save(e);
+                sendEvaluationKafka(e, "ADDED");
                 continue;
             }
 
             if (cer.getIdProdi() == EProdi.D4.id) {
                 e.setNumEvaluation(1);
-                evaluationRepository.save(e);
+                e = evaluationRepository.save(e);
+                sendEvaluationKafka(e, "ADDED");
 
                 e = new Evaluation();
                 e.setIdCompany(cer.getIdCompany());
                 e.setIdParticipant(cer.getIdParticipant());
                 e.setIdProdi(cer.getIdProdi());
                 e.setNumEvaluation(2);
-                evaluationRepository.save(e);
+                e = evaluationRepository.save(e);
+                sendEvaluationKafka(e, "ADDED");
 
                 e = new Evaluation();
                 e.setIdCompany(cer.getIdCompany());
                 e.setIdParticipant(cer.getIdParticipant());
                 e.setIdProdi(cer.getIdProdi());
                 e.setNumEvaluation(3);
-                evaluationRepository.save(e);
+                e = evaluationRepository.save(e);
+                sendEvaluationKafka(e, "ADDED");
             }
         }
     }
@@ -1256,6 +1365,7 @@ public class CompanyService implements ICompanyService {
             e.setPosition(updateEvaluationRequest.getPosition());
             e.setStatus(1);
             evaluationRepository.save(e);
+            sendEvaluationKafka(e, "UPDATE");
 
             for (ValuationRequest vr : updateEvaluationRequest.getValuation()) {
                 Valuation v = new Valuation();
@@ -1263,7 +1373,8 @@ public class CompanyService implements ICompanyService {
                 v.setValue(vr.getValue());
                 v.setIsCore(vr.getIsCore());
                 v.setEvaluation(e);
-                valuationRepository.save(v);
+                v= valuationRepository.save(v);
+                sendValuationKafka(v, "ADDED");
             }
         }
     }
@@ -1271,7 +1382,13 @@ public class CompanyService implements ICompanyService {
     @Override
     public void deleteAllEvaluation(Integer idProdi) {
         Integer currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+        List<Evaluation> listEvaluation = evaluationRepository.findByYearAndIdProdi(currentYear, idProdi);
+
         evaluationRepository.deleteAllByYearAndIdProdi(currentYear, idProdi);
+        for (Evaluation evaluation : listEvaluation) {
+            sendEvaluationKafka(evaluation, "DELETE");
+        }
     }
 
     @Override
@@ -1940,7 +2057,8 @@ public class CompanyService implements ICompanyService {
                     pr.setYear(Calendar.getInstance().get(Calendar.YEAR));
                     pr.setStatus(Boolean.FALSE);
                     pr.setCompany(c);
-                    prerequisiteRepository.save(pr);
+                    pr = prerequisiteRepository.save(pr);
+                    sendPrerequisiteKafka(pr, "ADDED");
                 }
                 isSuccess.set(true);
             } else if (!c.getStatus() == Boolean.TRUE.equals(Boolean.FALSE)) {
@@ -1959,6 +2077,7 @@ public class CompanyService implements ICompanyService {
             if (Boolean.TRUE.equals(isSuccess.get())) {
                 c.setStatus(!c.getStatus());
                 companyRepository.save(c);
+                sendCompanyKafka(c,"UPDATE");
             }
         });
         return isSuccess.get();
@@ -2371,7 +2490,8 @@ public class CompanyService implements ICompanyService {
             prerequisite.setYear(currentYear);
             prerequisite.setStatus(Boolean.FALSE);
             prerequisite.setCompany(c);
-            prerequisiteRepository.save(prerequisite);
+            prerequisite = prerequisiteRepository.save(prerequisite);
+            sendPrerequisiteKafka(prerequisite, "ADDED");
         }
     }
 }

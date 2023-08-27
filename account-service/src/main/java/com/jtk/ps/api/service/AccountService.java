@@ -2,6 +2,7 @@ package com.jtk.ps.api.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jtk.ps.api.controller.AccountController;
 import com.jtk.ps.api.dto.*;
 import com.jtk.ps.api.dto.kafka.AccountKafka;
 import com.jtk.ps.api.model.*;
@@ -11,6 +12,8 @@ import com.jtk.ps.api.util.JwtUtil;
 import com.jtk.ps.api.repository.AccountRepository;
 import com.jtk.ps.api.repository.LecturerRepository;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.io.IOException;
+import java.io.InputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +37,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AccountService implements UserDetailsService, IAccountService {
@@ -120,7 +126,7 @@ public class AccountService implements UserDetailsService, IAccountService {
         readAccountsResponse.setParticipant(accountResponses);
 
         // Get all account Lecturer by prodi
-        if(jwtTokenUtil.getRoleFromToken(token) == ERole.COMMITTEE.id){
+        if(jwtTokenUtil.getRoleFromToken(token) == ERole.COMMITTEE.id || jwtTokenUtil.getRoleFromToken(token) == ERole.SUPERVISOR.id){
             EProdi prodi = jwtTokenUtil.getProdiFromToken(token);
             readAccountsResponse.setLecturer(accountRepository.getAllAccountForCommittee(prodi));
         }else{
@@ -176,7 +182,7 @@ public class AccountService implements UserDetailsService, IAccountService {
         Map<String, Object> claims = new HashMap<>();
         String cookie = "accessToken=" + newAccessToken.get().getTokenValue() + ";refreshToken=" + newRefreshToken.get().getTokenValue();
 
-        if (account.getRole() == ERole.COMMITTEE || account.getRole() == ERole.HEAD_STUDY_PROGRAM) {
+        if (account.getRole() == ERole.COMMITTEE || account.getRole() == ERole.HEAD_STUDY_PROGRAM || account.getRole() == ERole.SUPERVISOR) {
             Optional<Lecturer> lecturer = lecturerRepository.findByAccountId(account.getId());
 
             lecturer.ifPresent(value -> {
@@ -294,13 +300,13 @@ public class AccountService implements UserDetailsService, IAccountService {
 
             String cookie = "accessToken=" + newAccessToken.getTokenValue() + ";refreshToken=" + newRefreshToken.getTokenValue();
 
-            if(account.getRole() == ERole.COMMITTEE || account.getRole() == ERole.HEAD_STUDY_PROGRAM){
+            if(account.getRole() == ERole.COMMITTEE || account.getRole() == ERole.HEAD_STUDY_PROGRAM || account.getRole() == ERole.SUPERVISOR){
                 Optional<Lecturer> lecturer = lecturerRepository.findByAccountId(account.getId());
 
                 if(lecturer.isPresent()){
                     newAccessToken = (jwtTokenUtil.generateAccessToken(user, lecturer.get().getProdi().id, lecturer.get().getId(), lecturer.get().getName()));
                 }else{
-                    throw new IllegalStateException("COMMITTEE OR HEAD OF STUDY PROGRAM NOT HAVE DATA NAME");
+                    throw new IllegalStateException("COMMITTEE OR SUPERVISOR OR HEAD OF STUDY PROGRAM NOT HAVE DATA NAME");
                 }
             }else if(account.getRole() == ERole.COMPANY){
                 HttpHeaders headers = new HttpHeaders();
@@ -326,7 +332,6 @@ public class AccountService implements UserDetailsService, IAccountService {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 headers.add(Constant.PayloadResponseConstant.COOKIE, cookie);
-
 
                 JSONArray jsonArray = new JSONArray();
                 jsonArray.put(account.getId());
@@ -369,11 +374,10 @@ public class AccountService implements UserDetailsService, IAccountService {
         account.setUsername(registerRequest.getUsername());
         account.setPassword(bCryptPasswordEncoder.encode(registerRequest.getPassword()));
         Account newAccount = accountRepository.save(account);
-
         sendAccountKafka(newAccount, "ADDED");
         try {
             int idProdi = jwtTokenUtil.getProdiFromToken(accessToken).id;
-            if(account.getRole() == ERole.COMMITTEE || account.getRole() == ERole.HEAD_STUDY_PROGRAM){
+            if(account.getRole() == ERole.COMMITTEE || account.getRole() == ERole.HEAD_STUDY_PROGRAM || account.getRole() == ERole.SUPERVISOR){
                 if (registerRequest.getName() != null) {
                     Lecturer lecturer = new Lecturer();
                     lecturer.setAccount(newAccount);
@@ -411,6 +415,7 @@ public class AccountService implements UserDetailsService, IAccountService {
     public void updatePassword(Account account, String newPassword) {
         account.setPassword(bCryptPasswordEncoder.encode(newPassword));
         accountRepository.save(account);
+        sendAccountKafka(account, "UPDATE");
     }
 
     @Override
@@ -427,15 +432,15 @@ public class AccountService implements UserDetailsService, IAccountService {
             }
             if (updateAccountRequest.getIdRole() != null) {
                 accountValue.setRole(ERole.valueOfId(updateAccountRequest.getIdRole()));
-                accountRepository.save(accountValue);
-                sendAccountKafka(accountValue, "UPDATE");
+                Account a = accountRepository.save(accountValue);
+                sendAccountKafka(a, "UPDATE");
             }
         });
     }
 
     @Override
     public void deleteAccount(Account account, String cookie) {
-        if (account.getRole().id == 0 || account.getRole().id == 3) {
+        if (account.getRole().id == 0 || account.getRole().id == 3 || account.getRole().id == 4) {
             Optional<Lecturer> lecturer = lecturerRepository.findByAccountId(account.getId());
 
             if(lecturer.isPresent()){
@@ -464,6 +469,21 @@ public class AccountService implements UserDetailsService, IAccountService {
     @Override
     public CommitteeResponse getCommittee(Integer id) {
         return accountRepository.fetchCommitteeResponseDataInnerJoin(id);
+    }
+
+    @Override
+    public List<CommitteeResponse> getSupervisor() {
+        return accountRepository.fetchSupervisorResponseDataInnerJoin();
+    }
+
+    @Override
+    public List<CommitteeResponse> getSupervisorByProdi(EProdi prodi) {
+        return accountRepository.fetchSupervisorResponseDataInnerJoinByProdi(prodi);
+    }
+
+    @Override
+    public CommitteeResponse getSupervisor(Integer id) {
+        return accountRepository.fetchSupervisorResponseDataInnerJoin(id);
     }
 
     @Override

@@ -1,12 +1,15 @@
 package com.jtk.ps.api.service;
 
 import be.quodlibet.boxable.*;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jtk.ps.api.dto.*;
 import com.jtk.ps.api.dto.cv.*;
 import com.jtk.ps.api.dto.jsonpolban.CourseCodeValue;
 import com.jtk.ps.api.dto.jsonpolban.ParticipantJsonResponse;
+import com.jtk.ps.api.dto.kafka.ParticipantKafka;
 import com.jtk.ps.api.model.*;
 import com.jtk.ps.api.repository.*;
 import com.jtk.ps.api.util.Constant;
@@ -23,8 +26,10 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -86,6 +91,32 @@ public class ParticipantService implements IParticipantService {
 
     @Autowired
     private AbsenceRecapRepository absenceRecapRepository;
+
+    @Autowired
+    @Lazy
+    private KafkaTemplate<String, String> kafkaAccountTemplate;
+
+    private void sendParticipantKafka(Participant participant, String operation){
+        ParticipantKafka objectKafka = new ParticipantKafka();
+
+        objectKafka.setAccount_id(participant.getAccountId());
+        objectKafka.setId(participant.getId());
+        objectKafka.setName(participant.getName());
+        objectKafka.setProdi_id(participant.getProdiId());
+        objectKafka.setStatus_cv(participant.getStatusCv());
+        objectKafka.setYear(participant.getYear());
+        objectKafka.setOperation(operation);
+        
+        try {
+            // Mengubah objek menjadi string JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String pesanJson = objectMapper.writeValueAsString(objectKafka);
+
+            kafkaAccountTemplate.send("participant_topic", pesanJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public List<ParticipantIdName> getNameAndIdCompanies(Integer idProdi) {
@@ -335,6 +366,7 @@ public class ParticipantService implements IParticipantService {
         oParticipant.ifPresent(participant -> {
             participant.setStatusCv(!participant.getStatusCv());
             participantRepository.save(participant);
+            sendParticipantKafka(participant, "UPDATE");
             isUpdate.set(true);
         });
         return isUpdate.get();
@@ -1714,6 +1746,7 @@ public class ParticipantService implements IParticipantService {
                         participant.setIpk(p.getIpk());
                         participant.setCv(c);
                         Participant newParticipant = participantRepository.save(participant);
+                        sendParticipantKafka(newParticipant, "ADDED");
 
                         for (CourseCodeValue ccv : p.getCourse()) {
                             Course course = courseRepository.findByCode(ccv.getCode());

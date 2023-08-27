@@ -20,6 +20,7 @@ import com.jtk.ps.api.dto.kafka.EvaluationKafka;
 import com.jtk.ps.api.dto.kafka.FinalMappingKafka;
 import com.jtk.ps.api.dto.kafka.LecturerKafka;
 import com.jtk.ps.api.dto.kafka.ParticipantKafka;
+import com.jtk.ps.api.dto.kafka.PrerequisiteKafka;
 import com.jtk.ps.api.dto.kafka.SelfAssessmentAspectKafka;
 import com.jtk.ps.api.dto.kafka.SelfAssessmentGradeKafka;
 import com.jtk.ps.api.dto.kafka.SelfAssessmentKafka;
@@ -39,6 +40,7 @@ import com.jtk.ps.api.model.EventStore;
 import com.jtk.ps.api.model.FinalMapping;
 import com.jtk.ps.api.model.Lecturer;
 import com.jtk.ps.api.model.Participant;
+import com.jtk.ps.api.model.Prerequisite;
 import com.jtk.ps.api.model.SelfAssessment;
 import com.jtk.ps.api.model.SelfAssessmentAspect;
 import com.jtk.ps.api.model.SelfAssessmentGrade;
@@ -59,6 +61,7 @@ import com.jtk.ps.api.repository.EventStoreRepository;
 import com.jtk.ps.api.repository.FinalMappingRepository;
 import com.jtk.ps.api.repository.LecturerRepository;
 import com.jtk.ps.api.repository.ParticipantRepository;
+import com.jtk.ps.api.repository.PrerequisiteRepository;
 import com.jtk.ps.api.repository.SelfAssessmentAspectRepository;
 import com.jtk.ps.api.repository.SelfAssessmentGradeRepository;
 import com.jtk.ps.api.repository.SelfAssessmentRepository;
@@ -154,6 +157,10 @@ public class KafkaConsumer {
     @Autowired
     @Lazy
     private EvaluationFormRepository evaluationFormRepository;
+
+    @Autowired
+    @Lazy
+    private PrerequisiteRepository prerequisiteRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -800,7 +807,7 @@ public class KafkaConsumer {
                 aspect.setName(receivedObject.getName());
                 aspect.setProdiId(receivedObject.getProdiId());
                 aspect.setStatus(receivedObject.getStatus());
-                aspect.setGradeWeight(receivedObject.getGradeWeight());
+                aspect.setGradeWeight((float)receivedObject.getMaxGrade());
                 aspect.setId(receivedObject.getId());
 
                 supervisorGradeAspectRepository.save(aspect);
@@ -810,7 +817,7 @@ public class KafkaConsumer {
                     as.setName(receivedObject.getName());
                     as.setProdiId(receivedObject.getProdiId());
                     as.setStatus(receivedObject.getStatus());
-                    as.setGradeWeight(receivedObject.getGradeWeight());
+                    as.setGradeWeight((float)receivedObject.getMaxGrade());
 
                     supervisorGradeAspectRepository.save(as);
                     eventStoreHandler("supervisor_grade_aspect", "SUPERVISOR_GRADE_ASPECT_UPDATE", as, as.getId());
@@ -952,6 +959,48 @@ public class KafkaConsumer {
 
                     deadlineRepository.delete(l);
                     eventStoreHandler("deadline", "DEADLINE_DELETE", l, l.getId());
+                });
+            }
+
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @KafkaListener(topics = "prerequisite_topic", groupId = groupId)
+    public void consumePrerequisite(String message) {
+        try {
+            // Mengubah string JSON menjadi objek
+            ObjectMapper objectMapper = new ObjectMapper();
+            PrerequisiteKafka receivedObject = objectMapper.readValue(message, PrerequisiteKafka.class);
+
+            // proses melakukan save pada tabel account
+            if (receivedObject.getOperation().equalsIgnoreCase("ADDED")) {
+                Prerequisite prerequisite = new Prerequisite();
+
+                prerequisite.setId(receivedObject.getId());
+                prerequisite.setYear(receivedObject.getYear());
+                Optional<Company> company = companyRepository.findById(receivedObject.getCompany_id());
+                prerequisite.setCompany(company.get());
+
+                prerequisiteRepository.save(prerequisite);
+                eventStoreHandler("prerequisite", "PREREQUISITE_ADDED", prerequisite, prerequisite.getId());
+            } else if (receivedObject.getOperation().equalsIgnoreCase("UPDATE")) {
+                prerequisiteRepository.findById(receivedObject.getId()).ifPresent(l -> {
+
+                    l.setId(receivedObject.getId());
+                    l.setYear(receivedObject.getYear());
+                    Optional<Company> company = companyRepository.findById(receivedObject.getCompany_id());
+                    l.setCompany(company.get());
+
+                    prerequisiteRepository.save(l);
+                    eventStoreHandler("prerequisite", "PREREQUISITE_UPDATE", l, l.getId());
+                });
+            } else if (receivedObject.getOperation().equalsIgnoreCase("DELETE")) {
+                prerequisiteRepository.findById(receivedObject.getId()).ifPresent(l -> {
+
+                    prerequisiteRepository.delete(l);
+                    eventStoreHandler("prerequisite", "PREREQUISITE_DELETE", l, l.getId());
                 });
             }
 

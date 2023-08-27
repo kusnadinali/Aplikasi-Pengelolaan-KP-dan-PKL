@@ -346,7 +346,7 @@ public class KafkaConsumerTest {
     @Test
     void consumeSupervisorGradeAspectTest() throws InterruptedException {
         String topic = "supervisor_aspect_topic";
-        SupervisorGradeAspectKafka eventKafka = new SupervisorGradeAspectKafka(null, "topic", 0f, 1, 6, "ADDED");
+        SupervisorGradeAspectKafka eventKafka = new SupervisorGradeAspectKafka(null, "topic", 0, 1, 6, "ADDED");
 
         String message = null;
         try {
